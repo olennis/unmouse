@@ -77,7 +77,7 @@ The outline marks the area being scrolled. Press `Tab` to move over to the sideb
 
 <img src="docs/images/settings.png" width="420" alt="Unmouse settings window — shortcuts, permissions, and the keyboard scroll guide">
 
-Open the settings window from **Settings…** (**설정…** in Korean) (Settings…) in the menu bar icon's menu, or by launching Unmouse again from Spotlight while it is already running. You don't need the mouse inside the settings window either.
+Open the settings window from **Settings…** (**설정…** in Korean) in the menu bar icon's menu, or by launching Unmouse again from Spotlight while it is already running. You don't need the mouse inside the settings window either.
 
 - Press `⌘R` / `⌘E` / `⌘D`, then type a new shortcut to change the window switcher / click hints / keyboard scroll shortcut.
 - `⌘1` / `⌘2` open the System Settings pane for each permission.
