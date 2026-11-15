@@ -51,6 +51,8 @@ enum Demo {
         model.query = "un"
         Snapshot.render(SwitcherView(model: model), size: screen, to: "\(outputDirectory)/search.png")
 
+        Snapshot.render(SettingsView(model: SettingsModel()), size: CGSize(width: 560, height: 760), to: "\(outputDirectory)/settings.png")
+
         // 클릭 힌트
         let frames = MockDocument.clickable.map { $0.offsetBy(dx: documentFrame.minX, dy: documentFrame.minY) }
             .sorted { ($0.minY, $0.minX) < ($1.minY, $1.minX) }

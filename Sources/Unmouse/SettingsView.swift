@@ -81,17 +81,17 @@ final class SettingsModel: ObservableObject {
             let hasStrongModifier = !event.modifierFlags.intersection([.command, .option, .control]).isEmpty
             let isFunctionKey = KeyNames.name(for: candidate.keyCode).hasPrefix("F") && KeyNames.name(for: candidate.keyCode).count > 1
             guard hasStrongModifier || isFunctionKey else {
-                self.shortcutError = String(localized: "Press it together with at least one of ⌘, ⌥, or ⌃.")
+                self.shortcutError = L10n.text("Include at least one modifier: ⌘, ⌥, or ⌃.")
                 return nil
             }
             if self.shortcuts.contains(where: { $0.key != slot && $0.value == candidate }) {
-                self.shortcutError = String(localized: "\(candidate.display) is already used by another Unmouse feature.")
+                self.shortcutError = L10n.format("%@ is already assigned to another Unmouse feature.", candidate.display)
             } else if HotKeyCenter.shared.register(candidate, for: slot) {
                 candidate.save(slot)
                 self.shortcuts[slot] = candidate
                 self.shortcutError = nil
             } else {
-                self.shortcutError = String(localized: "\(candidate.display) is in use elsewhere and can’t be registered.")
+                self.shortcutError = L10n.format("%@ is in use elsewhere and could not be registered.", candidate.display)
             }
             self.stopRecording()
             return nil
@@ -124,7 +124,7 @@ final class SettingsModel: ObservableObject {
             if enabled { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
             loginError = nil
         } catch {
-            loginError = String(localized: "Couldn’t change the login item: \(error.localizedDescription)")
+            loginError = L10n.format("Could not change login item: %@", error.localizedDescription)
         }
         launchAtLogin = SMAppService.mainApp.status == .enabled
     }
@@ -151,74 +151,74 @@ struct SettingsView: View {
                         .font(.callout)
                 }
             } header: {
-                Text("Shortcuts")
+                Text(L10n.text("Shortcuts"))
             }
 
             Section {
                 PermissionRow(
-                    title: "Accessibility",
-                    detail: "Needed to show windows on other desktops, minimized windows, and window titles.",
+                    title: L10n.text("Accessibility"),
+                    detail: L10n.text("Required to show windows on other desktops, minimized windows, and window titles."),
                     granted: model.accessibilityGranted,
                     shortcutKey: "1",
                     action: model.requestAccessibility
                 )
                 PermissionRow(
-                    title: "Screen & System Audio Recording",
-                    detail: "Needed to show window preview images. Without it, app icons are shown instead. Relaunch Unmouse after allowing it.",
+                    title: L10n.text("Screen & System Audio Recording"),
+                    detail: L10n.text("Required for window previews. Without it, app icons are shown. Relaunch Unmouse after granting permission."),
                     granted: model.screenCaptureGranted,
                     shortcutKey: "2",
                     action: model.requestScreenCapture
                 )
             } header: {
-                Text("Permissions")
+                Text(L10n.text("Permissions"))
             } footer: {
-                Text("Turn on Unmouse in the list in System Settings. Screen contents never leave this Mac.")
+                Text(L10n.text("Enable Unmouse in System Settings. Screen contents never leave this Mac."))
             }
 
             Section {
-                usageRow(model.shortcut(.scroll).keySymbols, "Turn scroll mode on / off")
-                usageRow(["J", "K"], "Scroll down / up (↓ ↑ also work; hold to keep scrolling)")
-                usageRow(["D", "U"], "Half a page down / up (Space scrolls one page down)")
-                usageRow(["G", "G"], "Jump to the top")
-                usageRow(["⇧", "G"], "Jump to the bottom")
-                usageRow(["H", "L"], "Scroll left / right")
-                usageRow(["⇥"], "Switch the area being scrolled (sidebar ↔ content, etc.)")
-                usageRow(["esc"], "Exit")
+                usageRow(model.shortcut(.scroll).keySymbols, L10n.text("Toggle scroll mode"))
+                usageRow(["J", "K"], L10n.text("Scroll down / up (also ↓ ↑; hold to keep scrolling)"))
+                usageRow(["D", "U"], L10n.text("Half page down / up (Space scrolls a full page down)"))
+                usageRow(["G", "G"], L10n.text("Go to top"))
+                usageRow(["⇧", "G"], L10n.text("Go to bottom"))
+                usageRow(["H", "L"], L10n.text("Scroll left / right"))
+                usageRow(["⇥"], L10n.text("Switch scroll area (e.g. sidebar ↔ content)"))
+                usageRow(["esc"], L10n.text("Exit"))
             } header: {
-                Text("Keyboard Scroll")
+                Text(L10n.text("Keyboard Scroll"))
             } footer: {
-                Text("The pointer moves to the center of the area being scrolled.")
+                Text(L10n.text("The pointer moves to the center of the scroll area."))
             }
 
-            Section("General") {
+            Section(L10n.text("General")) {
                 Toggle(isOn: Binding(get: { model.launchAtLogin }, set: model.setLaunchAtLogin)) {
-                    Text("Launch at login")
+                    Text(L10n.text("Launch at login"))
                     if let error = model.loginError { Text(error) }
                 }
-                Toggle("Include windows on other desktops", isOn: $includeOtherSpaces)
-                Toggle("Include minimized or hidden windows", isOn: $includeMinimized)
+                Toggle(L10n.text("Include windows on other desktops"), isOn: $includeOtherSpaces)
+                Toggle(L10n.text("Include minimized and hidden windows"), isOn: $includeMinimized)
             }
 
-            Section("Window Switcher") {
-                usageRow(model.shortcut(.switcher).keySymbols, "Open · while open, next window")
-                usageRow(["A", "…", "Z"], "Press the letter on a preview to jump to that window")
-                usageRow(["←", "↑", "↓", "→"], "Move the selection (Tab / ⇧Tab also work)")
-                usageRow(["Space"], "Go to the selected window (↩ also works)")
-                usageRow(["/"], "Search by app name or window title (↩ selects while searching)")
-                usageRow(["esc"], "Close")
+            Section(L10n.text("Window Switcher")) {
+                usageRow(model.shortcut(.switcher).keySymbols, L10n.text("Open · when open, select the next window"))
+                usageRow(["A", "…", "Z"], L10n.text("Press the letter on a preview to switch to that window"))
+                usageRow(["←", "↑", "↓", "→"], L10n.text("Move selection (also Tab / ⇧Tab)"))
+                usageRow(["Space"], L10n.text("Switch to selected window (also ↩)"))
+                usageRow(["/"], L10n.text("Search by app or window title (↩ to select while searching)"))
+                usageRow(["esc"], L10n.text("Close"))
             }
 
             Section {
-                usageRow(model.shortcut(.hints).keySymbols, "Label buttons, links, and text fields in the current window")
-                usageRow(["A", "…", "Z"], "Type the letters shown to click that spot")
-                usageRow(["⇧"], "Hold ⇧ with the last letter to right-click")
-                usageRow(["⌘"], "Hold ⌘ with the last letter to ⌘-click (open in a new tab, etc.)")
-                usageRow(["⌫"], "Delete one letter")
-                usageRow(["esc"], "Cancel")
+                usageRow(model.shortcut(.hints).keySymbols, L10n.text("Label buttons, links, and text fields in the current window"))
+                usageRow(["A", "…", "Z"], L10n.text("Type the label to click that spot"))
+                usageRow(["⇧"], L10n.text("Hold ⇧ with the last letter to right-click"))
+                usageRow(["⌘"], L10n.text("Hold ⌘ with the last letter to ⌘-click (e.g. open in a new tab)"))
+                usageRow(["⌫"], L10n.text("Delete one letter"))
+                usageRow(["esc"], L10n.text("Cancel"))
             } header: {
-                Text("Click Hints")
+                Text(L10n.text("Click Hints"))
             } footer: {
-                Text("Requires the Accessibility permission. In some apps, such as Chrome, fewer web page elements may be labeled the first time; press the shortcut again.")
+                Text(L10n.text("Requires Accessibility permission. In apps such as Chrome, press the shortcut again if some web page elements are missing on the first try."))
             }
         }
         .formStyle(.grouped)
@@ -236,7 +236,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text("Unmouse")
                     .font(.title2.weight(.semibold))
-                Text("Mission Control you drive with the keyboard, no mouse needed")
+                Text(L10n.text("Mission Control for choosing windows with just your keyboard"))
                     .foregroundStyle(.secondary)
             }
         }
@@ -245,11 +245,11 @@ struct SettingsView: View {
 
     private var footer: some View {
         HStack {
-            Button("Quit Unmouse") { NSApp.terminate(nil) }
+            Button(L10n.text("Quit Unmouse")) { NSApp.terminate(nil) }
             Spacer()
-            Button("Close") { model.onClose?() }
+            Button(L10n.text("Close")) { model.onClose?() }
                 .keyboardShortcut(.cancelAction)
-            Button("Try the Window Switcher") { model.onTryIt?() }
+            Button(L10n.text("Try Window Switcher")) { model.onTryIt?() }
                 .keyboardShortcut(.defaultAction)
                 .buttonStyle(.glassProminent)
         }
@@ -266,7 +266,7 @@ struct SettingsView: View {
                     model.toggleRecording(slot)
                 } label: {
                     if recording {
-                        Text("Press a new shortcut…")
+                        Text(L10n.text("Press a new shortcut…"))
                     } else {
                         HStack(spacing: 3) {
                             ForEach(model.shortcut(slot).keySymbols, id: \.self) { KeyCap($0) }
@@ -275,16 +275,16 @@ struct SettingsView: View {
                 }
                 .keyboardShortcut(KeyEquivalent(key), modifiers: .command)
                 if model.shortcut(slot) != slot.defaultShortcut {
-                    Button("Default") { model.resetShortcut(slot) }
+                    Button(L10n.text("Reset")) { model.resetShortcut(slot) }
                 }
             }
         } label: {
             Text(slot.title)
-            if recording { Text("Press esc to cancel") } else { Text("Press ⌘\(String(key).uppercased()), then type a new shortcut to change it.") }
+            Text(recording ? L10n.text("esc to cancel") : L10n.format("Press ⌘%@, then enter a new shortcut to change it.", String(key).uppercased()))
         }
     }
 
-    private func usageRow(_ keys: [String], _ text: LocalizedStringKey) -> some View {
+    private func usageRow(_ keys: [String], _ text: String) -> some View {
         LabeledContent {
             HStack(spacing: 3) {
                 ForEach(Array(keys.enumerated()), id: \.offset) { _, key in
@@ -298,8 +298,8 @@ struct SettingsView: View {
 }
 
 private struct PermissionRow: View {
-    let title: LocalizedStringKey
-    let detail: LocalizedStringKey
+    let title: String
+    let detail: String
     let granted: Bool
     let shortcutKey: Character
     let action: () -> Void
@@ -307,10 +307,10 @@ private struct PermissionRow: View {
     var body: some View {
         LabeledContent {
             if granted {
-                Text("Allowed")
+                Text(L10n.text("Allowed"))
                     .foregroundStyle(.secondary)
             } else {
-                Button("Open Settings  ⌘\(String(shortcutKey))", action: action)
+                Button(L10n.format("Open Settings  ⌘%@", String(shortcutKey)), action: action)
                     .keyboardShortcut(KeyEquivalent(shortcutKey), modifiers: .command)
             }
         } label: {

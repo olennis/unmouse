@@ -92,18 +92,18 @@ struct SwitcherView: View {
             SearchBar(model: model)
                 .padding(.top, 16)
             if !model.accessibilityGranted {
-                PermissionBanner(message: "Without the Accessibility permission, only windows on the current screen are shown.")
+                PermissionBanner(message: L10n.text("Only windows on the current screen are shown without Accessibility permission."))
                     .padding(.top, 12)
             } else if !model.screenCaptureGranted {
-                PermissionBanner(message: "Without the Screen Recording permission, app icons are shown instead of window previews.")
+                PermissionBanner(message: L10n.text("App icons are shown instead of previews without Screen Recording permission."))
                     .padding(.top, 12)
             }
             Spacer(minLength: 0)
             if model.items.isEmpty {
                 ContentUnavailableView(
-                    model.query.isEmpty ? String(localized: "No open windows") : String(localized: "No results for “\(model.query)”"),
+                    model.query.isEmpty ? L10n.text("No Open Windows") : L10n.format("No Results for “%@”", model.query),
                     systemImage: model.query.isEmpty ? "macwindow" : "magnifyingglass",
-                    description: Text(model.query.isEmpty ? String(localized: "There are no windows to show.") : String(localized: "Try searching by app name or window title."))
+                    description: Text(model.query.isEmpty ? L10n.text("There are no windows to show.") : L10n.text("Try searching by app name or window title."))
                 )
                 Spacer(minLength: 0)
             }
@@ -216,8 +216,8 @@ struct WindowLabel: View {
         switch window.location {
         case .visible: nil
         case .otherSpace(let name): (name, "rectangle.on.rectangle")
-        case .minimized: (String(localized: "Minimized"), "arrow.down.right.and.arrow.up.left")
-        case .hidden: (String(localized: "Hidden"), "eye.slash")
+        case .minimized: (L10n.text("Minimized"), "arrow.down.right.and.arrow.up.left")
+        case .hidden: (L10n.text("Hidden"), "eye.slash")
         }
     }
 }
@@ -235,13 +235,13 @@ struct SearchBar: View {
                 SearchField(text: $model.query, isActive: model.isSearching)
                     .opacity(model.isSearching ? 1 : 0)
                 if !model.isSearching {
-                    Text("Search windows")
+                    Text(L10n.text("Search windows"))
                         .foregroundStyle(.secondary)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             if model.isSearching {
-                Text("\(model.items.count) found")
+                Text(L10n.format("Windows: %d", model.items.count))
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
@@ -270,7 +270,7 @@ struct SearchField: NSViewRepresentable {
         field.focusRingType = .none
         field.font = .systemFont(ofSize: 17)
         field.textColor = .white
-        field.placeholderString = String(localized: "App name or window title")
+        field.placeholderString = L10n.text("App name or window title")
         field.lineBreakMode = .byTruncatingTail
         field.cell?.usesSingleLineMode = true
         field.delegate = context.coordinator
@@ -311,16 +311,16 @@ struct LegendBar: View {
     var body: some View {
         HStack(spacing: 18) {
             if isSearching {
-                item(["←", "↑", "↓", "→"], "Move")
-                item(["↩"], "Select")
-                item(["esc"], "End search")
+                item(["←", "↑", "↓", "→"], L10n.text("Navigate"))
+                item(["↩"], L10n.text("Select"))
+                item(["esc"], L10n.text("End search"))
             } else {
-                item(["A", "–", "Z"], "Jump")
-                item(["←", "↑", "↓", "→"], "Move")
-                item(["Space"], "Select")
-                item(["/"], "Search")
-                item(["⌘", ","], "Settings")
-                item(["esc"], "Close")
+                item(["A", "–", "Z"], L10n.text("Jump to window"))
+                item(["←", "↑", "↓", "→"], L10n.text("Navigate"))
+                item(["Space"], L10n.text("Select"))
+                item(["/"], L10n.text("Search"))
+                item(["⌘", ","], L10n.text("Settings"))
+                item(["esc"], L10n.text("Close"))
             }
         }
         .font(.callout)
@@ -329,7 +329,7 @@ struct LegendBar: View {
         .glassEffect(.regular, in: .capsule)
     }
 
-    private func item(_ keys: [String], _ text: LocalizedStringKey) -> some View {
+    private func item(_ keys: [String], _ text: String) -> some View {
         HStack(spacing: 4) {
             ForEach(keys, id: \.self) { key in
                 if key == "–" { Text(key).foregroundStyle(.secondary) } else { KeyCap(key) }
@@ -359,10 +359,10 @@ struct KeyCap: View {
 }
 
 struct PermissionBanner: View {
-    let message: LocalizedStringKey
+    let message: String
     var body: some View {
         Label {
-            Text("\(Text(message))  Press \(Text("⌘,").fontWeight(.semibold)) to open Settings and grant the permission.")
+            Text(L10n.format("%@  Open Settings with ⌘, to grant permission.", message))
         } icon: {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(.yellow)

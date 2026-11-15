@@ -73,9 +73,9 @@ enum HotKeySlot: UInt32, CaseIterable {
 
     var title: String {
         switch self {
-        case .switcher: String(localized: "Open Window Switcher")
-        case .hints: String(localized: "Show Click Hints")
-        case .scroll: String(localized: "Keyboard Scroll Mode")
+        case .switcher: L10n.text("Open Window Switcher")
+        case .hints: L10n.text("Show Click Hints")
+        case .scroll: L10n.text("Keyboard Scroll Mode")
         }
     }
 }

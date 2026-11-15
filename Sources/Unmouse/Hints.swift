@@ -226,7 +226,7 @@ final class HintController: NSObject, NSWindowDelegate {
                        label: pair.1)
         }
         model.typed = ""
-        model.message = frames.isEmpty ? String(localized: "No clickable elements found") : nil
+        model.message = frames.isEmpty ? L10n.text("No clickable elements found") : nil
 
         let panel = self.panel ?? makePanel()
         self.panel = panel
@@ -346,11 +346,11 @@ struct HintOverlay: View {
                         Label(message, systemImage: "cursorarrow.slash")
                     } else {
                         HStack(spacing: 16) {
-                            legend(["A", "–", "Z"], "Click")
-                            legend(["⇧"], "Right-click")
-                            legend(["⌘"], "⌘-click")
-                            legend(["⌫"], "Delete")
-                            legend(["esc"], "Cancel")
+                            legend(["A", "–", "Z"], L10n.text("Click"))
+                            legend(["⇧"], L10n.text("Right-click"))
+                            legend(["⌘"], L10n.text("⌘-click"))
+                            legend(["⌫"], L10n.text("Delete"))
+                            legend(["esc"], L10n.text("Cancel"))
                         }
                     }
                 }
@@ -367,7 +367,7 @@ struct HintOverlay: View {
         .environment(\.colorScheme, .dark)
     }
 
-    private func legend(_ keys: [String], _ text: LocalizedStringKey) -> some View {
+    private func legend(_ keys: [String], _ text: String) -> some View {
         HStack(spacing: 4) {
             ForEach(keys, id: \.self) { key in
                 if key == "–" { Text(key).foregroundStyle(.secondary) } else { KeyCap(key) }

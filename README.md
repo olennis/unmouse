@@ -11,8 +11,6 @@ Switching windows, clicking, scrolling — the three moments your hand used to r
 
 All three shortcuts can be changed in Settings.
 
-The interface follows your Mac's language setting. English and Korean are included, and English is used for any other language.
-
 ![Window switcher — open windows laid out as previews, each labeled with a letter](docs/images/switcher.png)
 
 ## Window switcher — `⌥Tab`
@@ -77,7 +75,7 @@ The outline marks the area being scrolled. Press `Tab` to move over to the sideb
 
 <img src="docs/images/settings.png" width="420" alt="Unmouse settings window — shortcuts, permissions, and the keyboard scroll guide">
 
-Open the settings window from **Settings…** in the menu bar icon's menu, or by launching Unmouse again from Spotlight while it is already running. You don't need the mouse inside the settings window either.
+Open the settings window from **Settings…** (**설정…** in Korean) in the menu bar icon's menu, or by launching Unmouse again from Spotlight while it is already running. You don't need the mouse inside the settings window either.
 
 - Press `⌘R` / `⌘E` / `⌘D`, then type a new shortcut to change the window switcher / click hints / keyboard scroll shortcut.
 - `⌘1` / `⌘2` open the System Settings pane for each permission.
@@ -113,10 +111,6 @@ scripts/build-app.sh --install --run
 - Unmouse uses a private framework (SkyLight) to bring windows on other desktops to the front. Its behavior may change with macOS updates, and the app cannot be distributed on the Mac App Store.
 - Only one of the window switcher, click hints, and keyboard scroll can be active at a time.
 
-## Translations
-
-UI strings are written in English in the source code. Translations live in `Resources/<language>.lproj/Localizable.strings` (currently `ko.lproj`), and `scripts/build-app.sh` copies them into the app bundle. To add a language, create a new `.lproj` folder with the same keys and add the language code to `CFBundleLocalizations` in `Resources/Info.plist`.
-
 ## Regenerating the screenshots
 
 The screenshots in this document are not real screen captures: they are the app's actual UI rendered on top of mock windows. You can regenerate them without granting any permissions.
@@ -125,3 +119,15 @@ The screenshots in this document are not real screen captures: they are the app'
 swift build -c release
 .build/release/Unmouse --demo docs/images     # switcher, search, click hints, scroll
 ```
+
+## Interface language
+
+The app follows your Mac’s preferred language and supports English and Korean. Other languages fall back to English. You can also choose a language for this app in **System Settings → General → Language & Region → Applications**. Relaunch the app after changing its language.
+
+To verify the localization resources and language selection after a release build:
+
+```sh
+python3 scripts/check-localization.py
+```
+
+See [CHANGELOG.md](CHANGELOG.md) for changes.

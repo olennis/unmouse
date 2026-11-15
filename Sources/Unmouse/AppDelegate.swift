@@ -49,7 +49,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         var registered = true
         for slot in HotKeySlot.allCases where !HotKeyCenter.shared.register(Shortcut.load(slot), for: slot) {
             registered = false
-            settingsModel.shortcutError = String(localized: "Couldn’t register the \(Shortcut.load(slot).display) shortcut. Please choose a different one.")
+            settingsModel.shortcutError = L10n.format("Could not register %@. Please choose another shortcut.", Shortcut.load(slot).display)
         }
 
         // 처음 실행했거나 권한이 없으면 설정 창으로 안내한다.
@@ -71,24 +71,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         item.button?.image = NSImage(systemSymbolName: "rectangle.3.group", accessibilityDescription: "Unmouse")
 
         let menu = NSMenu()
-        let open = NSMenuItem(title: HotKeySlot.switcher.title, action: #selector(openSwitcher), keyEquivalent: "")
+        let open = NSMenuItem(title: L10n.text("Open Window Switcher"), action: #selector(openSwitcher), keyEquivalent: "")
         open.target = self
         menu.addItem(open)
         openMenuItem = open
-        let hint = NSMenuItem(title: HotKeySlot.hints.title, action: #selector(showHints), keyEquivalent: "")
+        let hint = NSMenuItem(title: L10n.text("Show Click Hints"), action: #selector(showHints), keyEquivalent: "")
         hint.target = self
         menu.addItem(hint)
         hintMenuItem = hint
-        let scroll = NSMenuItem(title: HotKeySlot.scroll.title, action: #selector(startScrolling), keyEquivalent: "")
+        let scroll = NSMenuItem(title: L10n.text("Keyboard Scroll Mode"), action: #selector(startScrolling), keyEquivalent: "")
         scroll.target = self
         menu.addItem(scroll)
         scrollMenuItem = scroll
         menu.addItem(.separator())
-        let settings = NSMenuItem(title: String(localized: "Settings…"), action: #selector(showSettings), keyEquivalent: ",")
+        let settings = NSMenuItem(title: L10n.text("Settings…"), action: #selector(showSettings), keyEquivalent: ",")
         settings.target = self
         menu.addItem(settings)
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: String(localized: "Quit Unmouse"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: L10n.text("Quit Unmouse"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         menu.delegate = self
         item.menu = menu
         statusItem = item
@@ -100,13 +100,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         let appItem = NSMenuItem()
         let appMenu = NSMenu()
-        appMenu.addItem(withTitle: String(localized: "Quit Unmouse"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        appMenu.addItem(withTitle: L10n.text("Quit Unmouse"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appItem.submenu = appMenu
         main.addItem(appItem)
 
         let windowItem = NSMenuItem()
-        let windowMenu = NSMenu(title: String(localized: "Window"))
-        windowMenu.addItem(withTitle: String(localized: "Close"), action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        let windowMenu = NSMenu(title: L10n.text("Window"))
+        windowMenu.addItem(withTitle: L10n.text("Close"), action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
         windowItem.submenu = windowMenu
         main.addItem(windowItem)
 
@@ -131,7 +131,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     @objc func showSettings() {
         if settingsWindow == nil {
             let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsView(model: settingsModel)))
-            window.title = String(localized: "Unmouse Settings")
+            window.title = L10n.text("Unmouse Settings")
             window.styleMask = [.titled, .closable, .fullSizeContentView]
             window.isReleasedWhenClosed = false
             window.center()
@@ -144,8 +144,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
 extension AppDelegate: NSMenuDelegate {
     func menuNeedsUpdate(_ menu: NSMenu) {
-        openMenuItem?.title = "\(HotKeySlot.switcher.title)    \(Shortcut.load(.switcher).display)"
-        hintMenuItem?.title = "\(HotKeySlot.hints.title)    \(Shortcut.load(.hints).display)"
-        scrollMenuItem?.title = "\(HotKeySlot.scroll.title)    \(Shortcut.load(.scroll).display)"
+        openMenuItem?.title = L10n.format("Open Window Switcher    %@", Shortcut.load(.switcher).display)
+        hintMenuItem?.title = L10n.format("Show Click Hints    %@", Shortcut.load(.hints).display)
+        scrollMenuItem?.title = L10n.format("Keyboard Scroll Mode    %@", Shortcut.load(.scroll).display)
     }
 }

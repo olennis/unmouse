@@ -9,9 +9,8 @@ swift build -c release
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp .build/release/Unmouse "$APP/Contents/MacOS/Unmouse"
+cp -R .build/release/Unmouse_Unmouse.bundle "$APP/Contents/Resources/"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
-# 시스템 언어에 맞춰 UI 문자열을 고르도록 번역 파일을 넣는다 (영어가 기본, 한국어 번역).
-cp -R Resources/*.lproj "$APP/Contents/Resources/"
 
 if [ ! -f build/AppIcon.icns ]; then
     swift scripts/make-icon.swift build/AppIcon.iconset
