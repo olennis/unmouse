@@ -1,100 +1,102 @@
 # Unmouse
 
-마우스 없이 키보드만으로 macOS를 쓰게 해 주는 메뉴 막대 앱입니다.
-윈도우 전환, 클릭, 스크롤 — 손이 마우스로 가던 세 가지 순간을 단축키 하나씩으로 바꿉니다.
+A macOS menu bar app that lets you use your Mac with the keyboard alone.
+Switching windows, clicking, scrolling — the three moments your hand used to reach for the mouse each become a single shortcut.
 
-| 기능 | 기본 단축키 | 하는 일 |
+| Feature | Default shortcut | What it does |
 | --- | --- | --- |
-| 윈도우 선택기 | `⌥Tab` | 열린 윈도우를 한 화면에 펼치고 글자 하나로 바로 이동 |
-| 클릭 힌트 | `⌥F` | 버튼·링크·입력란에 글자를 붙이고, 그 글자를 치면 클릭 |
-| 키보드 스크롤 | `⌥J` | `J` `K` `D` `U` 로 지금 보는 영역을 스크롤 |
+| Window switcher | `⌥Tab` | Lays out every open window on one screen and jumps to one with a single letter |
+| Click hints | `⌥F` | Labels buttons, links, and text fields with letters; type the letters to click |
+| Keyboard scroll | `⌥J` | Scrolls the area you are looking at with `J` `K` `D` `U` |
 
-세 단축키는 모두 설정에서 바꿀 수 있습니다.
+All three shortcuts can be changed in Settings.
 
-![윈도우 선택기 — 열린 윈도우가 미리보기로 펼쳐지고 각각 글자가 붙어 있다](docs/images/switcher.png)
+> **Note:** The app's interface is currently available in Korean only, so the screenshots below show Korean labels.
 
-## 윈도우 선택기 — `⌥Tab`
+![Window switcher — open windows laid out as previews, each labeled with a letter](docs/images/switcher.png)
 
-모든 데스크탑의 윈도우를 미리보기로 펼쳐 보여 줍니다. 각 미리보기에 붙은 글자를 누르면 그 윈도우로 바로 이동합니다.
+## Window switcher — `⌥Tab`
 
-위 화면에서 `S` 를 누르면 터미널로, `F` 를 누르면 다른 데스크탑에 있는 캘린더로 바로 이동합니다. 최소화된 윈도우도 함께 보입니다.
+Shows the windows from all of your desktops as previews. Press the letter on a preview to jump straight to that window.
 
-`/` 를 누르고 입력하면 앱 이름·윈도우 제목으로 걸러집니다.
+In the screenshot above, pressing `S` jumps to Terminal, and `F` jumps to Calendar on another desktop. Minimized windows are shown too.
 
-![윈도우 검색 — "un" 을 입력해 두 개의 윈도우만 남은 화면](docs/images/search.png)
+Press `/` and type to filter by app name or window title.
 
-| 키 | 동작 |
+![Window search — typing "un" narrows the list down to two windows](docs/images/search.png)
+
+| Key | Action |
 | --- | --- |
-| `⌥Tab` | 열기 · 열린 상태에서는 다음 윈도우 |
-| `A` … `Z` | 미리보기에 표시된 글자의 윈도우로 바로 이동 |
-| `←` `↑` `↓` `→` | 선택 이동 (`Tab` / `⇧Tab` 도 가능) |
-| `Space` | 선택한 윈도우로 이동 (`↩` 도 가능) |
-| `/` | 앱 이름·윈도우 제목 검색 (검색 중에는 `↩` 로 선택) |
-| `⌘,` | 설정 열기 |
-| `esc` | 닫기 |
+| `⌥Tab` | Open · while open, move to the next window |
+| `A` … `Z` | Jump to the window with that letter on its preview |
+| `←` `↑` `↓` `→` | Move the selection (`Tab` / `⇧Tab` also work) |
+| `Space` | Go to the selected window (`↩` also works) |
+| `/` | Search by app name or window title (press `↩` to select while searching) |
+| `⌘,` | Open Settings |
+| `esc` | Close |
 
-## 클릭 힌트 — `⌥F`
+## Click hints — `⌥F`
 
-지금 쓰는 윈도우의 버튼·링크·입력란마다 글자를 표시합니다. 그 글자를 입력하면 해당 위치를 클릭합니다.
+Labels every button, link, and text field in the window you are using with letters. Type those letters to click that spot.
 
-![클릭 힌트 — 툴바 버튼, 사이드바 항목, 버튼, 링크마다 글자가 표시된 화면](docs/images/hints.png)
+![Click hints — toolbar buttons, sidebar items, buttons, and links each labeled with a letter](docs/images/hints.png)
 
-위 화면에서 `Y` 를 누르면 "지금 써 보기" 버튼을, `T` 를 누르면 사이드바의 "키보드 스크롤" 항목을 클릭합니다.
+In the screenshot above, pressing `Y` clicks the blue "Try it now" button, and `T` clicks the "Keyboard scroll" item in the sidebar.
 
-| 키 | 동작 |
+| Key | Action |
 | --- | --- |
-| `⌥F` | 힌트 표시 |
-| `A` … `Z` | 표시된 글자를 입력하면 그 자리를 클릭 |
-| `⇧` + 마지막 글자 | 오른쪽 클릭 |
-| `⌘` + 마지막 글자 | `⌘` 클릭 (새 탭으로 열기 등) |
-| `⌫` | 한 글자 지우기 |
-| `esc` | 취소 |
+| `⌥F` | Show hints |
+| `A` … `Z` | Type the letters shown to click that spot |
+| `⇧` + last letter | Right-click |
+| `⌘` + last letter | `⌘`-click (open in a new tab, etc.) |
+| `⌫` | Delete one letter |
+| `esc` | Cancel |
 
-Chrome 등 일부 앱은 처음 한 번은 웹 페이지 요소가 덜 보일 수 있습니다. 그럴 때는 단축키를 한 번 더 누르세요.
+In some apps, such as Chrome, fewer web page elements may be labeled the first time. If that happens, press the shortcut once more.
 
-## 키보드 스크롤 — `⌥J`
+## Keyboard scroll — `⌥J`
 
-스크롤 모드를 켜면 스크롤할 영역 가운데로 포인터가 이동하고, 아래 키로 스크롤합니다.
+Turning on scroll mode moves the pointer to the center of the scrollable area, and the keys below scroll it.
 
-![키보드 스크롤 — 스크롤할 본문 영역에 테두리가 표시된 화면](docs/images/scroll.png)
+![Keyboard scroll — the content area to be scrolled is outlined](docs/images/scroll.png)
 
-테두리가 지금 스크롤되는 영역입니다. `Tab` 을 누르면 사이드바로 넘어갑니다.
+The outline marks the area being scrolled. Press `Tab` to move over to the sidebar.
 
-| 키 | 동작 |
+| Key | Action |
 | --- | --- |
-| `⌥J` | 스크롤 모드 켜기 / 끄기 |
-| `J` `K` | 아래 / 위로 스크롤 (`↓` `↑` 도 가능, 누르고 있으면 계속) |
-| `D` `U` | 반 페이지 아래 / 위 (`Space` 는 한 페이지 아래) |
-| `G` `G` | 맨 위로 |
-| `⇧G` | 맨 아래로 |
-| `H` `L` | 왼쪽 / 오른쪽으로 스크롤 |
-| `Tab` | 스크롤할 영역 바꾸기 (사이드바 ↔ 본문 등) |
-| `esc` | 끝내기 |
+| `⌥J` | Turn scroll mode on / off |
+| `J` `K` | Scroll down / up (`↓` `↑` also work; hold to keep scrolling) |
+| `D` `U` | Half a page down / up (`Space` scrolls one page down) |
+| `G` `G` | Jump to the top |
+| `⇧G` | Jump to the bottom |
+| `H` `L` | Scroll left / right |
+| `Tab` | Switch the area being scrolled (sidebar ↔ content, etc.) |
+| `esc` | Exit |
 
-## 설정
+## Settings
 
-<img src="docs/images/settings.png" width="420" alt="Unmouse 설정 창 — 단축키, 권한, 키보드 스크롤 안내">
+<img src="docs/images/settings.png" width="420" alt="Unmouse settings window — shortcuts, permissions, and the keyboard scroll guide">
 
-설정 창은 메뉴 막대 아이콘의 **설정…** 으로 열거나, 이미 실행 중일 때 Spotlight에서 Unmouse를 다시 실행하면 열립니다. 설정 창 안에서도 마우스가 필요 없습니다.
+Open the settings window from **설정…** (Settings…) in the menu bar icon's menu, or by launching Unmouse again from Spotlight while it is already running. You don't need the mouse inside the settings window either.
 
-- `⌘R` / `⌘E` / `⌘D` 를 누른 뒤 새 단축키를 입력하면 윈도우 선택기 / 클릭 힌트 / 키보드 스크롤 단축키가 바뀝니다.
-- `⌘1` / `⌘2` 로 각 권한의 시스템 설정 화면을 엽니다.
-- 로그인 시 자동 실행, 다른 데스크탑의 윈도우 포함, 최소화되거나 가려진 윈도우 포함 여부를 켜고 끌 수 있습니다.
+- Press `⌘R` / `⌘E` / `⌘D`, then type a new shortcut to change the window switcher / click hints / keyboard scroll shortcut.
+- `⌘1` / `⌘2` open the System Settings pane for each permission.
+- You can toggle launch at login, including windows from other desktops, and including minimized or hidden windows.
 
-## 권한
+## Permissions
 
-처음 실행하면 설정 창이 열리고 두 가지 권한을 안내합니다.
+On first launch, the settings window opens and walks you through two permissions.
 
-| 권한 | 쓰는 곳 | 없으면 |
+| Permission | Used for | Without it |
 | --- | --- | --- |
-| 손쉬운 사용 | 클릭 힌트, 키보드 스크롤, 다른 데스크탑·최소화된 윈도우와 윈도우 제목 | 클릭 힌트와 스크롤을 쓸 수 없고, 선택기에는 현재 화면의 윈도우만 표시 |
-| 화면 및 시스템 오디오 녹화 | 윈도우 미리보기 이미지 | 미리보기 대신 앱 아이콘으로 표시 |
+| Accessibility | Click hints, keyboard scroll, windows on other desktops, minimized windows, and window titles | Click hints and scrolling are unavailable, and the switcher shows only the windows on the current screen |
+| Screen & System Audio Recording | Window preview images | App icons are shown instead of previews |
 
-화면 기록 권한은 허용한 뒤 Unmouse를 다시 실행해야 적용됩니다. 화면 내용은 이 Mac 밖으로 전송되지 않습니다.
+After you grant the screen recording permission, relaunch Unmouse for it to take effect. Screen contents never leave your Mac.
 
-## 설치
+## Installation
 
-macOS 26 이상과 Swift 6 툴체인(Xcode 26)이 필요합니다.
+Requires macOS 26 or later and a Swift 6 toolchain (Xcode 26).
 
 ```sh
 git clone https://github.com/olennis/unmouse.git
@@ -102,20 +104,20 @@ cd unmouse
 scripts/build-app.sh --install --run
 ```
 
-- 인자 없이 실행하면 `build/Unmouse.app` 만 만듭니다.
-- `--install` 은 `/Applications/Unmouse.app` 으로 복사하고, `--run` 은 빌드한 앱을 실행합니다.
-- 코드 서명 인증서(Apple Development 또는 Developer ID)가 있으면 그것으로 서명해서 다시 빌드해도 권한이 유지됩니다. 없으면 ad-hoc 서명이라 빌드할 때마다 권한을 다시 허용해야 합니다. `CODESIGN_IDENTITY` 환경 변수로 인증서를 지정할 수 있습니다.
+- With no arguments, the script only builds `build/Unmouse.app`.
+- `--install` copies it to `/Applications/Unmouse.app`, and `--run` launches the built app.
+- If you have a code signing certificate (Apple Development or Developer ID), the app is signed with it and keeps its permissions across rebuilds. Without one it is ad-hoc signed, so you have to grant the permissions again after every build. Set the `CODESIGN_IDENTITY` environment variable to choose a certificate.
 
-## 알아 둘 점
+## Good to know
 
-- 다른 데스크탑의 윈도우를 앞으로 가져오기 위해 비공개 프레임워크(SkyLight)를 사용합니다. macOS 업데이트에 따라 동작이 달라질 수 있고, Mac App Store 배포는 불가능합니다.
-- 윈도우 선택기, 클릭 힌트, 키보드 스크롤은 한 번에 하나만 켜집니다.
+- Unmouse uses a private framework (SkyLight) to bring windows on other desktops to the front. Its behavior may change with macOS updates, and the app cannot be distributed on the Mac App Store.
+- Only one of the window switcher, click hints, and keyboard scroll can be active at a time.
 
-## 예시 화면 다시 만들기
+## Regenerating the screenshots
 
-이 문서의 예시 화면은 실제 화면 캡처가 아니라, 가상의 윈도우 위에 앱의 실제 UI 를 렌더링한 것입니다. 권한 없이 다시 만들 수 있습니다.
+The screenshots in this document are not real screen captures: they are the app's actual UI rendered on top of mock windows. You can regenerate them without granting any permissions.
 
 ```sh
 swift build -c release
-.build/release/Unmouse --demo docs/images     # 선택기·검색·클릭 힌트·스크롤
+.build/release/Unmouse --demo docs/images     # switcher, search, click hints, scroll
 ```
