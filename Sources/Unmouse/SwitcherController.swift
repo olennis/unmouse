@@ -266,3 +266,8 @@ enum Preferences {
         UserDefaults.standard.register(defaults: [includeMinimized: true, includeOtherSpaces: true, showMenuBarIcon: true])
     }
 }
+
+extension UserDefaults {
+    /// KVO 로 지켜보기 위한 속성. 이름이 Preferences.showMenuBarIcon 키와 같아야 한다.
+    @objc dynamic var showMenuBarIcon: Bool { bool(forKey: Preferences.showMenuBarIcon) }
+}
