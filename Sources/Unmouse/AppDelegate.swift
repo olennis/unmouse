@@ -8,6 +8,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private let scroller = ScrollController()
     private let settingsModel = SettingsModel()
     private var statusItem: NSStatusItem?
+    /// 마지막으로 적용한 아이콘 표시 여부. isVisible 을 다시 읽어 비교하면 재귀가 생긴다 (updateStatusItemVisibility 참고).
+    private var appliedMenuBarIconVisible: Bool?
+    private var menuBarIconObservation: NSKeyValueObservation?
     private var settingsWindow: NSWindow?
     private var openMenuItem: NSMenuItem?
     private var hintMenuItem: NSMenuItem?
@@ -18,9 +21,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         buildMainMenu()
         buildStatusItem()
         updateStatusItemVisibility()
-        // 설정 창의 "메뉴 막대에 아이콘 표시" 를 바꾸면 바로 반영한다.
-        NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.updateStatusItemVisibility() }
+        // 설정 창의 "메뉴 막대에 아이콘 표시" 를 바꾸면 바로 반영한다. 이 키만 지켜보고, 다음 런루프에서 적용한다.
+        menuBarIconObservation = UserDefaults.standard.observe(\.showMenuBarIcon) { [weak self] _, _ in
+            DispatchQueue.main.async { self?.updateStatusItemVisibility() }
         }
 
         // 문제 진단용: `defaults read app.unmouse.Unmouse lastLaunchStatus`
@@ -100,9 +103,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     /// 아이콘을 숨겨도 앱은 계속 실행되고, Spotlight 에서 다시 실행하면 설정 창이 열린다.
+    ///
+    /// isVisible 을 바꾸면 AppKit 이 그 값을 UserDefaults 에 저장하면서 변경 알림을 동기로 보낸다.
+    /// 그 시점엔 isVisible 이 아직 이전 값이라, isVisible 과 비교하면 같은 설정을 끝없이 반복하다 스택이 넘친다.
+    /// 그래서 마지막으로 적용한 값과 비교하고, 바꾸기 전에 먼저 기록한다.
     private func updateStatusItemVisibility() {
-        let visible = UserDefaults.standard.bool(forKey: Preferences.showMenuBarIcon)
-        if statusItem?.isVisible != visible { statusItem?.isVisible = visible }
+        let visible = UserDefaults.standard.showMenuBarIcon
+        guard let statusItem, appliedMenuBarIconVisible != visible else { return }
+        appliedMenuBarIconVisible = visible
+        statusItem.isVisible = visible
     }
 
     /// 설정 창에서 ⌘W / ⌘Q / 복사·붙여넣기가 동작하려면 메인 메뉴가 있어야 한다.
