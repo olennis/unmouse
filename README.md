@@ -11,7 +11,7 @@ Switching windows, clicking, scrolling — the three moments your hand used to r
 
 All three shortcuts can be changed in Settings.
 
-> **Note:** The app's interface is currently available in Korean only, so the screenshots below show Korean labels.
+> **Note:** The screenshots below show the Korean interface.
 
 ![Window switcher — open windows laid out as previews, each labeled with a letter](docs/images/switcher.png)
 
@@ -120,4 +120,14 @@ The screenshots in this document are not real screen captures: they are the app'
 ```sh
 swift build -c release
 .build/release/Unmouse --demo docs/images     # switcher, search, click hints, scroll
+```
+
+## Interface language
+
+The app follows your Mac’s preferred language and supports English and Korean. Other languages fall back to English. You can also choose a language for this app in **System Settings → General → Language & Region → Applications**. Relaunch the app after changing its language.
+
+To verify the localization resources and language selection after a release build:
+
+```sh
+python3 scripts/check-localization.py
 ```

@@ -9,6 +9,7 @@ swift build -c release
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp .build/release/Unmouse "$APP/Contents/MacOS/Unmouse"
+cp -R .build/release/Unmouse_Unmouse.bundle "$APP/Contents/Resources/"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 
 if [ ! -f build/AppIcon.icns ]; then

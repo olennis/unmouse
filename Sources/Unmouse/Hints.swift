@@ -226,7 +226,7 @@ final class HintController: NSObject, NSWindowDelegate {
                        label: pair.1)
         }
         model.typed = ""
-        model.message = frames.isEmpty ? "클릭할 수 있는 요소를 찾지 못했습니다" : nil
+        model.message = frames.isEmpty ? L10n.text("No clickable elements found") : nil
 
         let panel = self.panel ?? makePanel()
         self.panel = panel
@@ -346,11 +346,11 @@ struct HintOverlay: View {
                         Label(message, systemImage: "cursorarrow.slash")
                     } else {
                         HStack(spacing: 16) {
-                            legend(["A", "–", "Z"], "클릭")
-                            legend(["⇧"], "오른쪽 클릭")
-                            legend(["⌘"], "⌘ 클릭")
-                            legend(["⌫"], "지우기")
-                            legend(["esc"], "취소")
+                            legend(["A", "–", "Z"], L10n.text("Click"))
+                            legend(["⇧"], L10n.text("Right-click"))
+                            legend(["⌘"], L10n.text("⌘-click"))
+                            legend(["⌫"], L10n.text("Delete"))
+                            legend(["esc"], L10n.text("Cancel"))
                         }
                     }
                 }

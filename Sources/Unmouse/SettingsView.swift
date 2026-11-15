@@ -81,17 +81,17 @@ final class SettingsModel: ObservableObject {
             let hasStrongModifier = !event.modifierFlags.intersection([.command, .option, .control]).isEmpty
             let isFunctionKey = KeyNames.name(for: candidate.keyCode).hasPrefix("F") && KeyNames.name(for: candidate.keyCode).count > 1
             guard hasStrongModifier || isFunctionKey else {
-                self.shortcutError = "⌘, ⌥, ⌃ 중 하나 이상과 함께 눌러 주세요."
+                self.shortcutError = L10n.text("Include at least one modifier: ⌘, ⌥, or ⌃.")
                 return nil
             }
             if self.shortcuts.contains(where: { $0.key != slot && $0.value == candidate }) {
-                self.shortcutError = "\(candidate.display) 는 Unmouse 의 다른 기능에 이미 쓰이고 있습니다."
+                self.shortcutError = L10n.format("%@ is already assigned to another Unmouse feature.", candidate.display)
             } else if HotKeyCenter.shared.register(candidate, for: slot) {
                 candidate.save(slot)
                 self.shortcuts[slot] = candidate
                 self.shortcutError = nil
             } else {
-                self.shortcutError = "\(candidate.display) 는 다른 곳에서 사용 중이라 등록할 수 없습니다."
+                self.shortcutError = L10n.format("%@ is in use elsewhere and could not be registered.", candidate.display)
             }
             self.stopRecording()
             return nil
@@ -124,7 +124,7 @@ final class SettingsModel: ObservableObject {
             if enabled { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
             loginError = nil
         } catch {
-            loginError = "로그인 항목을 변경하지 못했습니다: \(error.localizedDescription)"
+            loginError = L10n.format("Could not change login item: %@", error.localizedDescription)
         }
         launchAtLogin = SMAppService.mainApp.status == .enabled
     }
@@ -151,74 +151,74 @@ struct SettingsView: View {
                         .font(.callout)
                 }
             } header: {
-                Text("단축키")
+                Text(L10n.text("Shortcuts"))
             }
 
             Section {
                 PermissionRow(
-                    title: "손쉬운 사용",
-                    detail: "다른 데스크탑·최소화된 윈도우와 윈도우 제목을 보여 주는 데 필요합니다.",
+                    title: L10n.text("Accessibility"),
+                    detail: L10n.text("Required to show windows on other desktops, minimized windows, and window titles."),
                     granted: model.accessibilityGranted,
                     shortcutKey: "1",
                     action: model.requestAccessibility
                 )
                 PermissionRow(
-                    title: "화면 및 시스템 오디오 녹화",
-                    detail: "윈도우 미리보기 이미지를 보여 주는 데 필요합니다. 없으면 앱 아이콘으로 표시됩니다. 허용 후 Unmouse 를 다시 실행해야 적용됩니다.",
+                    title: L10n.text("Screen & System Audio Recording"),
+                    detail: L10n.text("Required for window previews. Without it, app icons are shown. Relaunch Unmouse after granting permission."),
                     granted: model.screenCaptureGranted,
                     shortcutKey: "2",
                     action: model.requestScreenCapture
                 )
             } header: {
-                Text("권한")
+                Text(L10n.text("Permissions"))
             } footer: {
-                Text("시스템 설정 목록에서 Unmouse 를 켜 주세요. 화면 내용은 이 Mac 밖으로 전송되지 않습니다.")
+                Text(L10n.text("Enable Unmouse in System Settings. Screen contents never leave this Mac."))
             }
 
             Section {
-                usageRow(model.shortcut(.scroll).keySymbols, "스크롤 모드 켜기 / 끄기")
-                usageRow(["J", "K"], "아래 / 위로 스크롤 (↓ ↑ 도 가능, 누르고 있으면 계속)")
-                usageRow(["D", "U"], "반 페이지 아래 / 위 (Space 는 한 페이지 아래)")
-                usageRow(["G", "G"], "맨 위로")
-                usageRow(["⇧", "G"], "맨 아래로")
-                usageRow(["H", "L"], "왼쪽 / 오른쪽으로 스크롤")
-                usageRow(["⇥"], "스크롤할 영역 바꾸기 (사이드바 ↔ 본문 등)")
-                usageRow(["esc"], "끝내기")
+                usageRow(model.shortcut(.scroll).keySymbols, L10n.text("Toggle scroll mode"))
+                usageRow(["J", "K"], L10n.text("Scroll down / up (also ↓ ↑; hold to keep scrolling)"))
+                usageRow(["D", "U"], L10n.text("Half page down / up (Space scrolls a full page down)"))
+                usageRow(["G", "G"], L10n.text("Go to top"))
+                usageRow(["⇧", "G"], L10n.text("Go to bottom"))
+                usageRow(["H", "L"], L10n.text("Scroll left / right"))
+                usageRow(["⇥"], L10n.text("Switch scroll area (e.g. sidebar ↔ content)"))
+                usageRow(["esc"], L10n.text("Exit"))
             } header: {
-                Text("키보드 스크롤")
+                Text(L10n.text("Keyboard Scroll"))
             } footer: {
-                Text("스크롤할 영역 가운데로 포인터가 이동합니다.")
+                Text(L10n.text("The pointer moves to the center of the scroll area."))
             }
 
-            Section("일반") {
+            Section(L10n.text("General")) {
                 Toggle(isOn: Binding(get: { model.launchAtLogin }, set: model.setLaunchAtLogin)) {
-                    Text("로그인 시 자동 실행")
+                    Text(L10n.text("Launch at login"))
                     if let error = model.loginError { Text(error) }
                 }
-                Toggle("다른 데스크탑의 윈도우 포함", isOn: $includeOtherSpaces)
-                Toggle("최소화되거나 가려진 윈도우 포함", isOn: $includeMinimized)
+                Toggle(L10n.text("Include windows on other desktops"), isOn: $includeOtherSpaces)
+                Toggle(L10n.text("Include minimized and hidden windows"), isOn: $includeMinimized)
             }
 
-            Section("윈도우 선택기") {
-                usageRow(model.shortcut(.switcher).keySymbols, "열기 · 열린 상태에서는 다음 윈도우")
-                usageRow(["A", "…", "Z"], "미리보기에 표시된 글자를 누르면 그 윈도우로 바로 이동")
-                usageRow(["←", "↑", "↓", "→"], "선택 이동 (Tab / ⇧Tab 도 가능)")
-                usageRow(["Space"], "선택한 윈도우로 이동 (↩ 도 가능)")
-                usageRow(["/"], "앱 이름·윈도우 제목 검색 (검색 중에는 ↩ 로 선택)")
-                usageRow(["esc"], "닫기")
+            Section(L10n.text("Window Switcher")) {
+                usageRow(model.shortcut(.switcher).keySymbols, L10n.text("Open · when open, select the next window"))
+                usageRow(["A", "…", "Z"], L10n.text("Press the letter on a preview to switch to that window"))
+                usageRow(["←", "↑", "↓", "→"], L10n.text("Move selection (also Tab / ⇧Tab)"))
+                usageRow(["Space"], L10n.text("Switch to selected window (also ↩)"))
+                usageRow(["/"], L10n.text("Search by app or window title (↩ to select while searching)"))
+                usageRow(["esc"], L10n.text("Close"))
             }
 
             Section {
-                usageRow(model.shortcut(.hints).keySymbols, "지금 쓰는 윈도우의 버튼·링크·입력란에 글자 표시")
-                usageRow(["A", "…", "Z"], "표시된 글자를 입력하면 그 자리를 클릭")
-                usageRow(["⇧"], "마지막 글자를 ⇧ 와 함께 누르면 오른쪽 클릭")
-                usageRow(["⌘"], "마지막 글자를 ⌘ 와 함께 누르면 ⌘ 클릭 (새 탭으로 열기 등)")
-                usageRow(["⌫"], "한 글자 지우기")
-                usageRow(["esc"], "취소")
+                usageRow(model.shortcut(.hints).keySymbols, L10n.text("Label buttons, links, and text fields in the current window"))
+                usageRow(["A", "…", "Z"], L10n.text("Type the label to click that spot"))
+                usageRow(["⇧"], L10n.text("Hold ⇧ with the last letter to right-click"))
+                usageRow(["⌘"], L10n.text("Hold ⌘ with the last letter to ⌘-click (e.g. open in a new tab)"))
+                usageRow(["⌫"], L10n.text("Delete one letter"))
+                usageRow(["esc"], L10n.text("Cancel"))
             } header: {
-                Text("클릭 힌트")
+                Text(L10n.text("Click Hints"))
             } footer: {
-                Text("손쉬운 사용 권한이 필요합니다. Chrome 등 일부 앱은 처음 한 번은 웹 페이지 요소가 덜 보일 수 있으니 다시 눌러 주세요.")
+                Text(L10n.text("Requires Accessibility permission. In apps such as Chrome, press the shortcut again if some web page elements are missing on the first try."))
             }
         }
         .formStyle(.grouped)
@@ -236,7 +236,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text("Unmouse")
                     .font(.title2.weight(.semibold))
-                Text("마우스 없이 키보드만으로 윈도우를 고르는 Mission Control")
+                Text(L10n.text("Mission Control for choosing windows with just your keyboard"))
                     .foregroundStyle(.secondary)
             }
         }
@@ -245,11 +245,11 @@ struct SettingsView: View {
 
     private var footer: some View {
         HStack {
-            Button("Unmouse 종료") { NSApp.terminate(nil) }
+            Button(L10n.text("Quit Unmouse")) { NSApp.terminate(nil) }
             Spacer()
-            Button("닫기") { model.onClose?() }
+            Button(L10n.text("Close")) { model.onClose?() }
                 .keyboardShortcut(.cancelAction)
-            Button("윈도우 선택기 열어 보기") { model.onTryIt?() }
+            Button(L10n.text("Try Window Switcher")) { model.onTryIt?() }
                 .keyboardShortcut(.defaultAction)
                 .buttonStyle(.glassProminent)
         }
@@ -266,7 +266,7 @@ struct SettingsView: View {
                     model.toggleRecording(slot)
                 } label: {
                     if recording {
-                        Text("새 단축키를 누르세요…")
+                        Text(L10n.text("Press a new shortcut…"))
                     } else {
                         HStack(spacing: 3) {
                             ForEach(model.shortcut(slot).keySymbols, id: \.self) { KeyCap($0) }
@@ -275,12 +275,12 @@ struct SettingsView: View {
                 }
                 .keyboardShortcut(KeyEquivalent(key), modifiers: .command)
                 if model.shortcut(slot) != slot.defaultShortcut {
-                    Button("기본값") { model.resetShortcut(slot) }
+                    Button(L10n.text("Reset")) { model.resetShortcut(slot) }
                 }
             }
         } label: {
             Text(slot.title)
-            Text(recording ? "취소하려면 esc" : "⌘\(String(key).uppercased()) 를 누르고 새 단축키를 입력하면 변경됩니다.")
+            Text(recording ? L10n.text("esc to cancel") : L10n.format("Press ⌘%@, then enter a new shortcut to change it.", String(key).uppercased()))
         }
     }
 
@@ -307,10 +307,10 @@ private struct PermissionRow: View {
     var body: some View {
         LabeledContent {
             if granted {
-                Text("허용됨")
+                Text(L10n.text("Allowed"))
                     .foregroundStyle(.secondary)
             } else {
-                Button("설정 열기  ⌘\(String(shortcutKey))", action: action)
+                Button(L10n.format("Open Settings  ⌘%@", String(shortcutKey)), action: action)
                     .keyboardShortcut(KeyEquivalent(shortcutKey), modifiers: .command)
             }
         } label: {

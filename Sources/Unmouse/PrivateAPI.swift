@@ -68,9 +68,9 @@ struct SpaceMap {
                 map.order[id] = index
                 if (space["type"] as? Int ?? 0) == 0 {
                     desktopNumber += 1
-                    map.labels[id] = "데스크탑 \(desktopNumber)"
+                    map.labels[id] = L10n.format("Desktop %d", desktopNumber)
                 } else {
-                    map.labels[id] = "전체 화면"
+                    map.labels[id] = L10n.text("Full Screen")
                 }
             }
         }
