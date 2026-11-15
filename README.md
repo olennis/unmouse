@@ -11,8 +11,6 @@ Switching windows, clicking, scrolling — the three moments your hand used to r
 
 All three shortcuts can be changed in Settings.
 
-> **Note:** The screenshots below show the Korean interface.
-
 ![Window switcher — open windows laid out as previews, each labeled with a letter](docs/images/switcher.png)
 
 ## Window switcher — `⌥Tab`
