@@ -15,15 +15,15 @@ enum Demo {
 
         // 윈도우 선택기
         let mocks: [(app: String, title: String, path: String, frame: CGRect, location: WindowInfo.Location, view: AnyView)] = [
-            ("Safari", "Unmouse 사용 설명서", "/Applications/Safari.app",
+            ("Safari", "Unmouse User Guide", "/Applications/Safari.app",
              CGRect(x: 90, y: 70, width: 1180, height: 760), .visible, AnyView(MockDocument())),
-            ("터미널", "unmouse — zsh", "/System/Applications/Utilities/Terminal.app",
+            ("Terminal", "unmouse — zsh", "/System/Applications/Utilities/Terminal.app",
              CGRect(x: 940, y: 560, width: 720, height: 460), .visible, AnyView(MockTerminal())),
-            ("메모", "회의 메모", "/System/Applications/Notes.app",
+            ("Notes", "Meeting Notes", "/System/Applications/Notes.app",
              CGRect(x: 60, y: 600, width: 620, height: 440), .visible, AnyView(MockNotes())),
-            ("캘린더", "", "/System/Applications/Calendar.app",
-             CGRect(x: 0, y: 0, width: 980, height: 660), .otherSpace("데스크탑 2"), AnyView(MockCalendar())),
-            ("Finder", "문서", "/System/Library/CoreServices/Finder.app",
+            ("Calendar", "", "/System/Applications/Calendar.app",
+             CGRect(x: 0, y: 0, width: 980, height: 660), .otherSpace("Desktop 2"), AnyView(MockCalendar())),
+            ("Finder", "Documents", "/System/Library/CoreServices/Finder.app",
              CGRect(x: 0, y: 0, width: 860, height: 540), .minimized, AnyView(MockFinder())),
         ]
         var windows: [WindowInfo] = []
@@ -113,9 +113,9 @@ struct MockDocument: View {
     static let contentArea = CGRect(x: sidebarWidth, y: barHeight, width: size.width - sidebarWidth, height: size.height - barHeight)
 
     static let sidebarItems: [(String, String)] = [
-        ("sparkles", "시작하기"), ("keyboard", "단축키"), ("rectangle.3.group", "윈도우 선택기"),
-        ("cursorarrow.rays", "클릭 힌트"), ("arrow.up.arrow.down", "키보드 스크롤"),
-        ("lock.shield", "권한"), ("questionmark.circle", "자주 묻는 질문"),
+        ("sparkles", "Getting Started"), ("keyboard", "Shortcuts"), ("rectangle.3.group", "Window Switcher"),
+        ("cursorarrow.rays", "Click Hints"), ("arrow.up.arrow.down", "Keyboard Scroll"),
+        ("lock.shield", "Permissions"), ("questionmark.circle", "FAQ"),
     ]
     static let selectedRow = 3
     static func sidebarRow(_ index: Int) -> CGRect {
@@ -137,12 +137,12 @@ struct MockDocument: View {
     static let primaryButton = CGRect(x: contentX, y: 250, width: 132, height: 36)
     static let secondaryButton = CGRect(x: contentX + 146, y: 250, width: 116, height: 36)
     static let links: [(String, CGRect)] = [
-        ("단축키 바꾸기", CGRect(x: contentX, y: 398, width: 98, height: 22)),
-        ("권한 설정 열기", CGRect(x: contentX + 130, y: 398, width: 104, height: 22)),
-        ("문제 해결", CGRect(x: contentX + 266, y: 398, width: 68, height: 22)),
+        ("Change shortcuts", CGRect(x: contentX, y: 398, width: 140, height: 22)),
+        ("Open permissions", CGRect(x: contentX + 172, y: 398, width: 140, height: 22)),
+        ("Troubleshooting", CGRect(x: contentX + 344, y: 398, width: 130, height: 22)),
     ]
     static let cards: [(String, String, CGRect)] = (0..<3).map { index in
-        let titles = ["윈도우 선택기", "클릭 힌트", "키보드 스크롤"]
+        let titles = ["Window Switcher", "Click Hints", "Keyboard Scroll"]
         let keys = ["⌥ Tab", "⌥ F", "⌥ J"]
         return (titles[index], keys[index], CGRect(x: contentX + CGFloat(index) * 280, y: 500, width: 260, height: 170))
     }
@@ -176,13 +176,13 @@ struct MockDocument: View {
             }
             HStack(spacing: 6) {
                 Image(systemName: "magnifyingglass")
-                Text("검색")
+                Text("Search")
                 Spacer()
             }
             .font(.system(size: 13)).foregroundStyle(faint).padding(.horizontal, 9)
             .background(Color(white: 0.93), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
             .place(Self.searchField)
-            Text("Unmouse 사용 설명서").font(.system(size: 14, weight: .semibold)).foregroundStyle(ink)
+            Text("Unmouse User Guide").font(.system(size: 14, weight: .semibold)).foregroundStyle(ink)
                 .place(CGRect(x: 366, y: 12, width: 400, height: 28))
 
             ForEach(Array(Self.sidebarItems.enumerated()), id: \.offset) { index, item in
@@ -200,34 +200,34 @@ struct MockDocument: View {
                 .place(Self.sidebarRow(index))
             }
 
-            Text("클릭 힌트").font(.system(size: 34, weight: .bold)).foregroundStyle(ink)
+            Text("Click Hints").font(.system(size: 34, weight: .bold)).foregroundStyle(ink)
                 .place(CGRect(x: Self.contentX, y: 92, width: 600, height: 44))
-            Text("버튼·링크·입력란마다 글자가 붙습니다. 그 글자를 치면 클릭됩니다.")
+            Text("Every button, link, and text field gets a letter. Type it to click.")
                 .font(.system(size: 17)).foregroundStyle(Color(white: 0.35))
                 .place(CGRect(x: Self.contentX, y: 146, width: 800, height: 26))
-            Text("손은 키보드 위에 그대로 두세요. ⇧ 와 함께 누르면 오른쪽 클릭, ⌘ 와 함께 누르면 ⌘ 클릭입니다.")
+            Text("Keep your hands on the keyboard. Add ⇧ to right-click, or ⌘ to ⌘-click.")
                 .font(.system(size: 15)).foregroundStyle(faint)
                 .place(CGRect(x: Self.contentX, y: 184, width: 800, height: 24))
 
-            Text("지금 써 보기").font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
+            Text("Try it now").font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(link, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
                 .place(Self.primaryButton)
-            Text("소스 보기").font(.system(size: 14, weight: .semibold)).foregroundStyle(ink)
+            Text("View source").font(.system(size: 14, weight: .semibold)).foregroundStyle(ink)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(white: 0.92), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
                 .place(Self.secondaryButton)
 
-            Text("더 알아보기").font(.system(size: 20, weight: .semibold)).foregroundStyle(ink)
+            Text("Learn more").font(.system(size: 20, weight: .semibold)).foregroundStyle(ink)
                 .place(CGRect(x: Self.contentX, y: 332, width: 400, height: 28))
-            Text("단축키는 설정에서 바꿀 수 있고, 처음 실행하면 필요한 권한을 안내합니다.")
+            Text("Shortcuts can be changed in Settings, and the first launch walks you through the permissions.")
                 .font(.system(size: 15)).foregroundStyle(Color(white: 0.4))
                 .place(CGRect(x: Self.contentX, y: 366, width: 800, height: 22))
             ForEach(Self.links, id: \.0) { title, rect in
                 Text(title).font(.system(size: 15, weight: .medium)).foregroundStyle(link).place(rect)
             }
 
-            Text("세 가지 모드").font(.system(size: 20, weight: .semibold)).foregroundStyle(ink)
+            Text("Three modes").font(.system(size: 20, weight: .semibold)).foregroundStyle(ink)
                 .place(CGRect(x: Self.contentX, y: 458, width: 400, height: 28))
             ForEach(Self.cards, id: \.0) { title, key, rect in
                 RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color(white: 0.965)).place(rect)
@@ -237,7 +237,7 @@ struct MockDocument: View {
                     .place(CGRect(x: rect.minX + 20, y: rect.minY + 20, width: 200, height: 26))
                 Text(title).font(.system(size: 17, weight: .semibold)).foregroundStyle(ink)
                     .place(CGRect(x: rect.minX + 20, y: rect.minY + 60, width: 220, height: 24))
-                Text("자세히 보기 ›").font(.system(size: 14, weight: .medium)).foregroundStyle(link)
+                Text("Details ›").font(.system(size: 14, weight: .medium)).foregroundStyle(link)
                     .place(Self.cardLink(rect))
             }
         }
@@ -283,7 +283,7 @@ struct MockTerminal: View {
 }
 
 struct MockNotes: View {
-    private let items = ["힌트 글자를 홈 로우부터 배정", "스크롤 영역 전환은 Tab", "설정 창도 키보드만으로", "README 에 예시 화면 추가"]
+    private let items = ["Assign hint letters from the home row", "Tab switches the scroll area", "Keyboard-only settings window", "Add screenshots to the README"]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -294,8 +294,8 @@ struct MockNotes: View {
             }
             .padding(.horizontal, 16).frame(height: 40)
             VStack(alignment: .leading, spacing: 14) {
-                Text("회의 메모").font(.system(size: 28, weight: .bold))
-                Text("이번 주 할 일").font(.system(size: 16)).foregroundStyle(Color(white: 0.45))
+                Text("Meeting Notes").font(.system(size: 28, weight: .bold))
+                Text("This week").font(.system(size: 16)).foregroundStyle(Color(white: 0.45))
                 ForEach(Array(items.enumerated()), id: \.offset) { index, item in
                     HStack(spacing: 10) {
                         Image(systemName: index < 2 ? "checkmark.circle.fill" : "circle")
@@ -316,22 +316,22 @@ struct MockNotes: View {
 
 struct MockCalendar: View {
     private let events: [Int: (String, Color)] = [
-        4: ("디자인 리뷰", .blue), 9: ("배포", .green), 12: ("점심 약속", .orange),
-        17: ("회고", .purple), 23: ("릴리스 노트", .blue), 26: ("휴가", .pink),
+        4: ("Design review", .blue), 9: ("Deploy", .green), 12: ("Lunch", .orange),
+        17: ("Retro", .purple), 23: ("Release notes", .blue), 26: ("Vacation", .pink),
     ]
 
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
                 ForEach(0..<3, id: \.self) { Circle().fill([Color.red, Color.yellow, Color.green][$0].opacity(0.9)).frame(width: 13, height: 13) }
-                Text("11월").font(.system(size: 24, weight: .bold)).padding(.leading, 16)
+                Text("November").font(.system(size: 24, weight: .bold)).padding(.leading, 16)
                 Spacer()
-                Text("오늘").font(.system(size: 14, weight: .medium)).padding(.horizontal, 12).padding(.vertical, 5)
+                Text("Today").font(.system(size: 14, weight: .medium)).padding(.horizontal, 12).padding(.vertical, 5)
                     .background(Color(white: 0.92), in: Capsule())
             }
             .padding(.horizontal, 16).frame(height: 56)
             HStack(spacing: 0) {
-                ForEach(["일", "월", "화", "수", "목", "금", "토"], id: \.self) {
+                ForEach(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], id: \.self) {
                     Text($0).font(.system(size: 13, weight: .medium)).foregroundStyle(Color(white: 0.5)).frame(maxWidth: .infinity)
                 }
             }
@@ -367,13 +367,13 @@ struct MockCalendar: View {
 }
 
 struct MockFinder: View {
-    private let folders = ["디자인", "문서", "스크린샷", "프로젝트", "참고 자료", "보관함", "초안", "릴리스"]
+    private let folders = ["Design", "Documents", "Screenshots", "Projects", "References", "Archive", "Drafts", "Releases"]
 
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
                 ForEach(0..<3, id: \.self) { Circle().fill([Color.red, Color.yellow, Color.green][$0].opacity(0.9)).frame(width: 13, height: 13) }
-                Text("문서").font(.system(size: 15, weight: .semibold)).padding(.leading, 16)
+                Text("Documents").font(.system(size: 15, weight: .semibold)).padding(.leading, 16)
                 Spacer()
                 Image(systemName: "square.grid.2x2").foregroundStyle(Color(white: 0.4))
             }

@@ -72,7 +72,7 @@ final class WindowCatalog {
                 rank = e.zIndex
             } else if w.location == .visible {
                 // 그사이 다른 데스크탑으로 갔거나 최소화됨. 정확한 상태는 뒤따르는 전체 수집이 바로잡는다.
-                location = .otherSpace("다른 데스크탑")
+                location = .otherSpace(String(localized: "Other Desktop"))
                 rank = 1_000_000 + Int(w.id % 1000)
             }
             return WindowInfo(id: w.id, pid: w.pid, appName: w.appName, title: w.title, icon: w.icon,
@@ -230,7 +230,7 @@ final class WindowCatalog {
             } else {
                 let windowSpaces = spacesByWindow[entry.wid] ?? SpaceMap.spaces(of: entry.wid)
                 if let other = windowSpaces.first(where: { !spaces.visible.contains($0) }) {
-                    location = .otherSpace(spaces.labels[other] ?? "다른 데스크탑")
+                    location = .otherSpace(spaces.labels[other] ?? String(localized: "Other Desktop"))
                     rank = 1_000_000 + (spaces.order[other] ?? 0) * 1000
                 } else {
                     continue // 현재 Space에 있는데 보이지 않고 최소화도 아님 → 윈도우 탭

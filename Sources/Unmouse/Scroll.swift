@@ -276,12 +276,12 @@ struct ScrollOverlay: View {
             VStack {
                 Spacer()
                 HStack(spacing: 16) {
-                    legend(["J", "K"], "스크롤")
-                    legend(["D", "U"], "반 페이지")
-                    legend(["G", "G"], "맨 위")
-                    legend(["⇧", "G"], "맨 아래")
-                    if model.areas.count > 1 { legend(["⇥"], "영역 전환") }
-                    legend(["esc"], "끝내기")
+                    legend(["J", "K"], "Scroll")
+                    legend(["D", "U"], "Half page")
+                    legend(["G", "G"], "Top")
+                    legend(["⇧", "G"], "Bottom")
+                    if model.areas.count > 1 { legend(["⇥"], "Switch area") }
+                    legend(["esc"], "Exit")
                 }
                 .font(.callout)
                 .padding(.horizontal, 18)
@@ -296,7 +296,7 @@ struct ScrollOverlay: View {
         .environment(\.colorScheme, .dark)
     }
 
-    private func legend(_ keys: [String], _ text: String) -> some View {
+    private func legend(_ keys: [String], _ text: LocalizedStringKey) -> some View {
         HStack(spacing: 4) {
             ForEach(Array(keys.enumerated()), id: \.offset) { _, key in KeyCap(key) }
             Text(text).foregroundStyle(.secondary).padding(.leading, 2)

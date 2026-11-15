@@ -92,18 +92,18 @@ struct SwitcherView: View {
             SearchBar(model: model)
                 .padding(.top, 16)
             if !model.accessibilityGranted {
-                PermissionBanner(message: "손쉬운 사용 권한이 없어 현재 화면의 윈도우만 표시됩니다.")
+                PermissionBanner(message: "Without the Accessibility permission, only windows on the current screen are shown.")
                     .padding(.top, 12)
             } else if !model.screenCaptureGranted {
-                PermissionBanner(message: "화면 녹화 권한이 없어 실제 화면 대신 아이콘으로 표시됩니다.")
+                PermissionBanner(message: "Without the Screen Recording permission, app icons are shown instead of window previews.")
                     .padding(.top, 12)
             }
             Spacer(minLength: 0)
             if model.items.isEmpty {
                 ContentUnavailableView(
-                    model.query.isEmpty ? "열린 윈도우 없음" : "“\(model.query)” 검색 결과 없음",
+                    model.query.isEmpty ? String(localized: "No open windows") : String(localized: "No results for “\(model.query)”"),
                     systemImage: model.query.isEmpty ? "macwindow" : "magnifyingglass",
-                    description: Text(model.query.isEmpty ? "표시할 윈도우가 없습니다." : "앱 이름이나 윈도우 제목으로 검색해 보세요.")
+                    description: Text(model.query.isEmpty ? String(localized: "There are no windows to show.") : String(localized: "Try searching by app name or window title."))
                 )
                 Spacer(minLength: 0)
             }
@@ -216,8 +216,8 @@ struct WindowLabel: View {
         switch window.location {
         case .visible: nil
         case .otherSpace(let name): (name, "rectangle.on.rectangle")
-        case .minimized: ("최소화됨", "arrow.down.right.and.arrow.up.left")
-        case .hidden: ("가려짐", "eye.slash")
+        case .minimized: (String(localized: "Minimized"), "arrow.down.right.and.arrow.up.left")
+        case .hidden: (String(localized: "Hidden"), "eye.slash")
         }
     }
 }
@@ -235,13 +235,13 @@ struct SearchBar: View {
                 SearchField(text: $model.query, isActive: model.isSearching)
                     .opacity(model.isSearching ? 1 : 0)
                 if !model.isSearching {
-                    Text("윈도우 검색")
+                    Text("Search windows")
                         .foregroundStyle(.secondary)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             if model.isSearching {
-                Text("\(model.items.count)개")
+                Text("\(model.items.count) found")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
@@ -270,7 +270,7 @@ struct SearchField: NSViewRepresentable {
         field.focusRingType = .none
         field.font = .systemFont(ofSize: 17)
         field.textColor = .white
-        field.placeholderString = "앱 이름 또는 윈도우 제목"
+        field.placeholderString = String(localized: "App name or window title")
         field.lineBreakMode = .byTruncatingTail
         field.cell?.usesSingleLineMode = true
         field.delegate = context.coordinator
@@ -311,16 +311,16 @@ struct LegendBar: View {
     var body: some View {
         HStack(spacing: 18) {
             if isSearching {
-                item(["←", "↑", "↓", "→"], "이동")
-                item(["↩"], "선택")
-                item(["esc"], "검색 끝내기")
+                item(["←", "↑", "↓", "→"], "Move")
+                item(["↩"], "Select")
+                item(["esc"], "End search")
             } else {
-                item(["A", "–", "Z"], "바로 이동")
-                item(["←", "↑", "↓", "→"], "이동")
-                item(["Space"], "선택")
-                item(["/"], "검색")
-                item(["⌘", ","], "설정")
-                item(["esc"], "닫기")
+                item(["A", "–", "Z"], "Jump")
+                item(["←", "↑", "↓", "→"], "Move")
+                item(["Space"], "Select")
+                item(["/"], "Search")
+                item(["⌘", ","], "Settings")
+                item(["esc"], "Close")
             }
         }
         .font(.callout)
@@ -329,7 +329,7 @@ struct LegendBar: View {
         .glassEffect(.regular, in: .capsule)
     }
 
-    private func item(_ keys: [String], _ text: String) -> some View {
+    private func item(_ keys: [String], _ text: LocalizedStringKey) -> some View {
         HStack(spacing: 4) {
             ForEach(keys, id: \.self) { key in
                 if key == "–" { Text(key).foregroundStyle(.secondary) } else { KeyCap(key) }
@@ -359,10 +359,10 @@ struct KeyCap: View {
 }
 
 struct PermissionBanner: View {
-    let message: String
+    let message: LocalizedStringKey
     var body: some View {
         Label {
-            Text("\(message)  \(Text("⌘,").fontWeight(.semibold)) 로 설정을 열어 권한을 허용하세요.")
+            Text("\(Text(message))  Press \(Text("⌘,").fontWeight(.semibold)) to open Settings and grant the permission.")
         } icon: {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(.yellow)
