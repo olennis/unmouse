@@ -11,7 +11,7 @@ Switching windows, clicking, scrolling — the three moments your hand used to r
 
 All three shortcuts can be changed in Settings.
 
-> **Note:** The app's interface is currently available in Korean only, so the screenshots below show Korean labels.
+> **Note:** The screenshots below show the Korean interface.
 
 ![Window switcher — open windows laid out as previews, each labeled with a letter](docs/images/switcher.png)
 
@@ -77,7 +77,7 @@ The outline marks the area being scrolled. Press `Tab` to move over to the sideb
 
 <img src="docs/images/settings.png" width="420" alt="Unmouse settings window — shortcuts, permissions, and the keyboard scroll guide">
 
-Open the settings window from **설정…** (Settings…) in the menu bar icon's menu, or by launching Unmouse again from Spotlight while it is already running. You don't need the mouse inside the settings window either.
+Open the settings window from **Settings…** (**설정…** in Korean) in the menu bar icon's menu, or by launching Unmouse again from Spotlight while it is already running. You don't need the mouse inside the settings window either.
 
 - Press `⌘R` / `⌘E` / `⌘D`, then type a new shortcut to change the window switcher / click hints / keyboard scroll shortcut.
 - `⌘1` / `⌘2` open the System Settings pane for each permission.
@@ -121,3 +121,15 @@ The screenshots in this document are not real screen captures: they are the app'
 swift build -c release
 .build/release/Unmouse --demo docs/images     # switcher, search, click hints, scroll
 ```
+
+## Interface language
+
+The app follows your Mac’s preferred language and supports English and Korean. Other languages fall back to English. You can also choose a language for this app in **System Settings → General → Language & Region → Applications**. Relaunch the app after changing its language.
+
+To verify the localization resources and language selection after a release build:
+
+```sh
+python3 scripts/check-localization.py
+```
+
+See [CHANGELOG.md](CHANGELOG.md) for changes.

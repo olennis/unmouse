@@ -3,11 +3,13 @@ import PackageDescription
 
 let package = Package(
     name: "Unmouse",
+    defaultLocalization: "en",
     platforms: [.macOS("26.0")],
     targets: [
         .executableTarget(
             name: "Unmouse",
             path: "Sources/Unmouse",
+            resources: [.process("Resources")],
             swiftSettings: [.swiftLanguageMode(.v5)],
             linkerSettings: [
                 // SkyLight: 다른 Space의 특정 윈도우를 앞으로 가져오는 데 필요한 비공개 프레임워크

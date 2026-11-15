@@ -276,12 +276,12 @@ struct ScrollOverlay: View {
             VStack {
                 Spacer()
                 HStack(spacing: 16) {
-                    legend(["J", "K"], "스크롤")
-                    legend(["D", "U"], "반 페이지")
-                    legend(["G", "G"], "맨 위")
-                    legend(["⇧", "G"], "맨 아래")
-                    if model.areas.count > 1 { legend(["⇥"], "영역 전환") }
-                    legend(["esc"], "끝내기")
+                    legend(["J", "K"], L10n.text("Scroll"))
+                    legend(["D", "U"], L10n.text("Half page"))
+                    legend(["G", "G"], L10n.text("Top"))
+                    legend(["⇧", "G"], L10n.text("Bottom"))
+                    if model.areas.count > 1 { legend(["⇥"], L10n.text("Switch area")) }
+                    legend(["esc"], L10n.text("Exit"))
                 }
                 .font(.callout)
                 .padding(.horizontal, 18)
