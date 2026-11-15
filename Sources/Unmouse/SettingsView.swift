@@ -134,6 +134,7 @@ struct SettingsView: View {
     @ObservedObject var model: SettingsModel
     @AppStorage(Preferences.includeMinimized) private var includeMinimized = true
     @AppStorage(Preferences.includeOtherSpaces) private var includeOtherSpaces = true
+    @AppStorage(Preferences.showMenuBarIcon) private var showMenuBarIcon = true
 
     var body: some View {
         Form {
@@ -194,6 +195,12 @@ struct SettingsView: View {
                 Toggle(isOn: Binding(get: { model.launchAtLogin }, set: model.setLaunchAtLogin)) {
                     Text(L10n.text("Launch at login"))
                     if let error = model.loginError { Text(error) }
+                }
+                Toggle(isOn: $showMenuBarIcon) {
+                    Text(L10n.text("Show icon in menu bar"))
+                    if !showMenuBarIcon {
+                        Text(L10n.text("Unmouse keeps running. To open Settings, launch Unmouse again from Spotlight."))
+                    }
                 }
                 Toggle(L10n.text("Include windows on other desktops"), isOn: $includeOtherSpaces)
                 Toggle(L10n.text("Include minimized and hidden windows"), isOn: $includeMinimized)

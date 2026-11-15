@@ -79,7 +79,8 @@ Open the settings window from **Settings…** (**설정…** in Korean) in the m
 
 - Press `⌘R` / `⌘E` / `⌘D`, then type a new shortcut to change the window switcher / click hints / keyboard scroll shortcut.
 - `⌘1` / `⌘2` open the System Settings pane for each permission.
-- You can toggle launch at login, including windows from other desktops, and including minimized or hidden windows.
+- You can toggle launch at login, showing the icon in the menu bar, including windows from other desktops, and including minimized or hidden windows.
+- If you hide the menu bar icon, Unmouse keeps running and its shortcuts still work. Launch Unmouse again from Spotlight to open Settings.
 
 ## Permissions
 
