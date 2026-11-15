@@ -17,6 +17,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         Preferences.registerDefaults()
         buildMainMenu()
         buildStatusItem()
+        updateStatusItemVisibility()
+        // 설정 창의 "메뉴 막대에 아이콘 표시" 를 바꾸면 바로 반영한다.
+        NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.updateStatusItemVisibility() }
+        }
 
         // 문제 진단용: `defaults read app.unmouse.Unmouse lastLaunchStatus`
         UserDefaults.standard.set("accessibility=\(AXIsProcessTrusted()) screenCapture=\(CGPreflightScreenCaptureAccess())", forKey: "lastLaunchStatus")
@@ -92,6 +97,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         menu.delegate = self
         item.menu = menu
         statusItem = item
+    }
+
+    /// 아이콘을 숨겨도 앱은 계속 실행되고, Spotlight 에서 다시 실행하면 설정 창이 열린다.
+    private func updateStatusItemVisibility() {
+        let visible = UserDefaults.standard.bool(forKey: Preferences.showMenuBarIcon)
+        if statusItem?.isVisible != visible { statusItem?.isVisible = visible }
     }
 
     /// 설정 창에서 ⌘W / ⌘Q / 복사·붙여넣기가 동작하려면 메인 메뉴가 있어야 한다.

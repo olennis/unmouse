@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Settings → General has a “Show icon in menu bar” option. When the icon is hidden, Unmouse keeps running and its shortcuts still work; launch Unmouse again from Spotlight to open Settings.
 - Unmouse now follows macOS language preferences, with English and Korean interfaces and English as the fallback. Per-app language settings take effect after relaunch.
 - Menus, status messages, settings, tooltips, and accessibility text use the selected language.
 - Built apps keep their translations when moved or installed on another Mac.

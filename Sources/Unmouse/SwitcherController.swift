@@ -260,8 +260,9 @@ final class SwitcherController: NSObject, NSWindowDelegate {
 enum Preferences {
     static let includeMinimized = "includeMinimized"
     static let includeOtherSpaces = "includeOtherSpaces"
+    static let showMenuBarIcon = "showMenuBarIcon"
 
     static func registerDefaults() {
-        UserDefaults.standard.register(defaults: [includeMinimized: true, includeOtherSpaces: true])
+        UserDefaults.standard.register(defaults: [includeMinimized: true, includeOtherSpaces: true, showMenuBarIcon: true])
     }
 }
