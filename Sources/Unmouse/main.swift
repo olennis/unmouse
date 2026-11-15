@@ -7,6 +7,9 @@ MainActor.assumeIsolated {
     if let index = CommandLine.arguments.firstIndex(of: "--snapshot"), CommandLine.arguments.count > index + 1 {
         // 개발용: 화면에 띄우지 않고 UI 를 PNG 로 렌더링한다.  Unmouse --snapshot <디렉터리>
         Snapshot.run(outputDirectory: CommandLine.arguments[index + 1])
+    } else if let index = CommandLine.arguments.firstIndex(of: "--demo"), CommandLine.arguments.count > index + 1 {
+        // 개발용: 목업 윈도우로 README 용 예시 화면을 만든다.  Unmouse --demo <디렉터리>
+        Demo.run(outputDirectory: CommandLine.arguments[index + 1])
     } else if let index = CommandLine.arguments.firstIndex(of: "--dump-hints"), CommandLine.arguments.count > index + 1 {
         // 개발용: 맨 앞 앱(또는 --bundle 로 지정한 앱)의 클릭 힌트를 계산해 기록한다.
         let directory = CommandLine.arguments[index + 1]
@@ -69,6 +72,16 @@ enum Snapshot {
     }
 
     static func render(_ view: some View, size: CGSize, to path: String) {
+        guard let rep = bitmap(of: view, size: size) else { return }
+        try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path))
+        print("wrote \(path)")
+    }
+
+    static func image(of view: some View, size: CGSize) -> CGImage? {
+        bitmap(of: view, size: size)?.cgImage
+    }
+
+    private static func bitmap(of view: some View, size: CGSize) -> NSBitmapImageRep? {
         let hosting = NSHostingView(rootView: view.frame(width: size.width, height: size.height))
         hosting.frame = CGRect(origin: .zero, size: size)
         let window = NSWindow(contentRect: hosting.frame, styleMask: [.borderless], backing: .buffered, defer: false)
@@ -76,9 +89,8 @@ enum Snapshot {
         window.contentView = hosting
         hosting.layoutSubtreeIfNeeded()
         RunLoop.main.run(until: Date().addingTimeInterval(0.4))
-        guard let rep = hosting.bitmapImageRepForCachingDisplay(in: hosting.bounds) else { return }
+        guard let rep = hosting.bitmapImageRepForCachingDisplay(in: hosting.bounds) else { return nil }
         hosting.cacheDisplay(in: hosting.bounds, to: rep)
-        try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path))
-        print("wrote \(path)")
+        return rep
     }
 }
