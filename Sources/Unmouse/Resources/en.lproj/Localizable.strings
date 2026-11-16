@@ -95,3 +95,5 @@
 "Show windows on the next display (⇧` for the previous one)" = "Show windows on the next display (⇧` for the previous one)";
 "Switch to Next Display" = "Switch to Next Display";
 "Switch to Next Display    %@" = "Switch to Next Display    %@";
+"Previous Desktop" = "Previous Desktop";
+"Next Desktop" = "Next Desktop";

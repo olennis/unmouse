@@ -28,6 +28,17 @@ func _SLPSSetFrontProcessWithOptions(_ psn: inout ProcessSerialNumber, _ wid: CG
 @_silgen_name("SLPSPostEventRecordTo")
 func SLPSPostEventRecordTo(_ psn: inout ProcessSerialNumber, _ bytes: UnsafeMutablePointer<UInt8>) -> CGError
 
+// 시스템 설정 > 키보드 단축키 > Mission Control 의 항목 (79: 왼쪽 Space 로 이동, 81: 오른쪽 Space 로 이동)
+@_silgen_name("CGSGetSymbolicHotKeyValue")
+func CGSGetSymbolicHotKeyValue(_ hotKey: Int32, _ keyEquivalent: inout UInt16, _ virtualKeyCode: inout UInt16,
+                               _ modifiers: inout UInt32) -> CGError
+
+@_silgen_name("CGSIsSymbolicHotKeyEnabled")
+func CGSIsSymbolicHotKeyEnabled(_ hotKey: Int32) -> Bool
+
+@_silgen_name("CGSSetSymbolicHotKeyEnabled")
+func CGSSetSymbolicHotKeyEnabled(_ hotKey: Int32, _ enabled: Bool) -> CGError
+
 // MARK: - AX helpers
 
 extension AXUIElement {

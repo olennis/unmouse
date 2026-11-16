@@ -7,6 +7,7 @@ Switching windows, clicking, scrolling — the three moments your hand used to r
 | --- | --- | --- |
 | Window switcher | `⌥Tab` | Lays out every open window on one screen and jumps to one with a single letter |
 | Next display | ``⌥` `` | Opens the window switcher on the next display (moves to the next display if it is already open) |
+| Previous / next desktop | `⌃⌘←` / `⌃⌘→` | Moves to the desktop (Space) on the left / right, like a three-finger swipe on the trackpad |
 | Click hints | `⌥F` | Labels buttons, links, and text fields with letters; type the letters to click |
 | Keyboard scroll | `⌥J` | Scrolls the area you are looking at with `J` `K` `D` `U` |
 
@@ -81,7 +82,7 @@ The outline marks the area being scrolled. Press `Tab` to move over to the sideb
 
 Open the settings window from **Settings…** (**설정…** in Korean) in the menu bar icon's menu, or by launching Unmouse again from Spotlight while it is already running. You don't need the mouse inside the settings window either.
 
-- Press `⌘R` / `⌘S` / `⌘E` / `⌘D`, then type a new shortcut to change the window switcher / next display / click hints / keyboard scroll shortcut.
+- Press `⌘R` / `⌘S` / `⌘[` / `⌘]` / `⌘E` / `⌘D`, then type a new shortcut to change the window switcher / next display / previous desktop / next desktop / click hints / keyboard scroll shortcut.
 - `⌘1` / `⌘2` open the System Settings pane for each permission.
 - You can toggle launch at login, showing the icon in the menu bar, including windows from other desktops, and including minimized or hidden windows.
 - If you hide the menu bar icon, Unmouse keeps running and its shortcuts still work. Launch Unmouse again from Spotlight to open Settings.

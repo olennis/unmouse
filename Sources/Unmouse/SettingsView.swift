@@ -145,6 +145,8 @@ struct SettingsView: View {
             Section {
                 shortcutRow(.switcher, key: "r")
                 shortcutRow(.nextDisplay, key: "s")
+                shortcutRow(.previousDesktop, key: "[")
+                shortcutRow(.nextDesktop, key: "]")
                 shortcutRow(.hints, key: "e")
                 shortcutRow(.scroll, key: "d")
                 if let error = model.shortcutError {

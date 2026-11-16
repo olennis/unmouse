@@ -55,6 +55,8 @@ enum HotKeySlot: UInt32, CaseIterable {
     case hints = 2      // 클릭 힌트
     case scroll = 3     // 키보드 스크롤
     case nextDisplay = 4 // 다음 디스플레이에서 윈도우 선택기
+    case previousDesktop = 5 // 왼쪽 데스크탑(Space)으로 — 세 손가락 오른쪽 쓸기
+    case nextDesktop = 6     // 오른쪽 데스크탑(Space)으로 — 세 손가락 왼쪽 쓸기
 
     var defaultsKey: String {
         switch self {
@@ -62,6 +64,8 @@ enum HotKeySlot: UInt32, CaseIterable {
         case .hints: "hintShortcut"
         case .scroll: "scrollShortcut"
         case .nextDisplay: "nextDisplayShortcut"
+        case .previousDesktop: "previousDesktopShortcut"
+        case .nextDesktop: "nextDesktopShortcut"
         }
     }
 
@@ -71,6 +75,9 @@ enum HotKeySlot: UInt32, CaseIterable {
         case .hints: Shortcut(keyCode: UInt32(kVK_ANSI_F), carbonModifiers: UInt32(optionKey)) // ⌥F
         case .scroll: Shortcut(keyCode: UInt32(kVK_ANSI_J), carbonModifiers: UInt32(optionKey)) // ⌥J
         case .nextDisplay: Shortcut(keyCode: UInt32(kVK_ANSI_Grave), carbonModifiers: UInt32(optionKey)) // ⌥`
+        // ⌥← 는 단어 이동, ⌥⌘← 는 브라우저 탭 전환과 겹쳐서 ⌃⌘ 를 쓴다.
+        case .previousDesktop: Shortcut(keyCode: UInt32(kVK_LeftArrow), carbonModifiers: UInt32(controlKey | cmdKey))   // ⌃⌘←
+        case .nextDesktop: Shortcut(keyCode: UInt32(kVK_RightArrow), carbonModifiers: UInt32(controlKey | cmdKey))      // ⌃⌘→
         }
     }
 
@@ -80,6 +87,8 @@ enum HotKeySlot: UInt32, CaseIterable {
         case .hints: L10n.text("Show Click Hints")
         case .scroll: L10n.text("Keyboard Scroll Mode")
         case .nextDisplay: L10n.text("Switch to Next Display")
+        case .previousDesktop: L10n.text("Previous Desktop")
+        case .nextDesktop: L10n.text("Next Desktop")
         }
     }
 }

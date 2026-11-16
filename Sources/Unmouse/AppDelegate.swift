@@ -50,6 +50,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             self?.scroller.close()
             self?.switcher.showNextDisplay()
         }
+        // 세 손가락 좌우 쓸기와 같은 데스크탑(Space) 전환. 떠 있는 모드는 닫고 넘어간다.
+        for (slot, direction) in [(HotKeySlot.previousDesktop, DesktopSwitcher.Direction.left), (.nextDesktop, .right)] {
+            HotKeyCenter.shared.handlers[slot] = { [weak self] in
+                guard let self else { return }
+                self.switcher.close()
+                self.hints.close()
+                self.scroller.close()
+                if !DesktopSwitcher.move(direction) { self.showSettings() }
+            }
+        }
         HotKeyCenter.shared.handlers[.hints] = { [weak self] in
             guard let self, !self.switcher.isOpen else { return }
             self.scroller.close()

@@ -95,3 +95,5 @@
 "Show windows on the next display (⇧` for the previous one)" = "다음 디스플레이의 윈도우 보기 (⇧`는 이전 디스플레이)";
 "Switch to Next Display" = "다음 디스플레이로 전환";
 "Switch to Next Display    %@" = "다음 디스플레이로 전환    %@";
+"Previous Desktop" = "이전 데스크탑으로 이동";
+"Next Desktop" = "다음 데스크탑으로 이동";
