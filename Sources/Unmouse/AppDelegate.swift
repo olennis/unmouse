@@ -55,7 +55,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         for (slot, direction) in [(HotKeySlot.previousDesktop, DesktopSwitcher.Direction.left), (.nextDesktop, .right)] {
             HotKeyCenter.shared.handlers[slot] = { [weak self] in
                 guard let self else { return }
-                self.switcher.noteDesktopMove()
+                self.switcher.beginDesktopMove(direction)
                 self.hints.close()
                 self.scroller.close()
                 if !DesktopSwitcher.move(direction) { self.showSettings() }

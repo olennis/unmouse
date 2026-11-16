@@ -241,6 +241,7 @@ final class SwitcherController: NSObject, NSWindowDelegate {
             // 애니메이션이 끝날 때 실제 윈도우가 이미 맨 앞에 와 있도록 먼저 전환한다.
             DispatchQueue.global(qos: .userInteractive).async { WindowFocuser.focus(target) }
         }
+        if pendingSpace != nil { finishDesktopMove() } // 전환 도중에 닫았다
         withAnimation(.easeInOut(duration: Self.collapseDuration)) { model.expanded = false }
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.collapseDuration + 0.02) {
             self.panel?.orderOut(nil)
@@ -259,9 +260,11 @@ final class SwitcherController: NSObject, NSWindowDelegate {
 
     private static func activeSpace() -> UInt64 { CGSGetActiveSpace(CGSMainConnectionID()) }
 
-    /// 열린 채로 데스크탑이 바뀌면(⌃⌘→, 트랙패드 스와이프) 닫지 않고 그 데스크탑의 윈도우로 다시 채운다.
-    /// 패널은 모든 데스크탑에 함께 있으므로 그대로 따라오고, 키 입력만 되찾는다.
-    /// 페이지는 macOS 데스크탑 전환처럼 통째로 옆으로 밀려 바뀐다 (패널이 화면을 덮고 있어 실제 전환은 가려진다).
+    /// 열린 채로 데스크탑이 바뀌면(⌃⌘→, 트랙패드 스와이프) 닫지 않고 그 데스크탑의 윈도우로 채운다.
+    ///
+    /// 단축키로 옮긴 경우엔 새 데스크탑의 선택기가 이미 전환 애니메이션과 함께 들어와 있다.
+    /// 원래 선택기를 같은 내용으로 바꿔 그 자리에 다시 놓고, 두 번째 선택기는 내린다 (눈에 보이는 변화 없음).
+    /// 트랙패드 스와이프는 미리 알 수 없어, 도착한 뒤 새 데스크탑 윈도우로 서서히 바꾼다.
     private func followSpaceChange() {
         guard phase == .open else { return }
         let previous = openedSpace
@@ -270,31 +273,32 @@ final class SwitcherController: NSObject, NSWindowDelegate {
         openedSpace = current
         spaceChangedWhileOpen = true
         lastSpaceFollow = Date()
-        panel?.makeKeyAndOrderFront(nil)
 
-        // 오른쪽(순서가 뒤인) 데스크탑으로 가면 페이지가 왼쪽으로 밀린다.
-        let order = SpaceMap.current().order
-        let direction: CGFloat = (order[Int(current)] ?? 0) >= (order[Int(previous)] ?? 0) ? 1 : -1
-
-        // 밀기는 바로 시작해야 하므로 지연 없는 목록으로 채우고, 정확한 목록은 뒤에서 바로잡는다.
-        let quick = WindowCatalog.shared.quickList().map(WindowCatalog.applyPreferences)
-        if let quick {
-            model.slide(to: quick, direction: direction)
-            model.startLiveThumbnails(maxPixelSize: Self.thumbnailPixels)
+        if pendingSpace == Int(current) {
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) {
+                model.load(pendingWindows, frontmostPID: nil, displays: model.displays, display: model.display)
+            }
+            // 바뀐 내용이 한 번 그려진 다음 바꿔치기한다.
+            DispatchQueue.main.async { self.finishDesktopMove() }
+        } else {
+            if pendingSpace != nil { finishDesktopMove() } // 다른 데스크탑에 도착: 준비해 둔 것은 버린다
+            panel?.makeKeyAndOrderFront(nil)
+            if let quick = WindowCatalog.shared.quickList().map(WindowCatalog.applyPreferences) {
+                model.slide(to: quick, direction: 1, fade: true)
+            }
         }
+        model.startLiveThumbnails(maxPixelSize: Self.thumbnailPixels)
         model.refreshWallpaper()
 
+        // 정확한 목록으로 바로잡는다 (구성이 같으면 아무것도 바뀌지 않는다).
         DispatchQueue.global(qos: .userInteractive).async {
             let windows = WindowCatalog.applyPreferences(WindowCatalog.shared.refresh())
             Task { @MainActor in
                 guard self.phase == .open, self.openedSpace == current else { return }
-                if quick == nil {
-                    self.model.slide(to: windows, direction: direction)
-                } else {
-                    self.model.update(windows)
-                }
+                self.model.update(windows)
                 self.model.startLiveThumbnails(maxPixelSize: Self.thumbnailPixels)
-                self.panel?.makeKeyAndOrderFront(nil)
             }
         }
     }
@@ -304,12 +308,28 @@ final class SwitcherController: NSObject, NSWindowDelegate {
     }
 
     private func makePanel() -> SwitcherPanel {
+        makePanel(model: model, interactive: true)
+    }
+
+    /// interactive: false 는 데스크탑 전환 동안만 보이는 두 번째 선택기 (입력을 받지 않는다).
+    private func makePanel(model: SwitcherModel, interactive: Bool) -> SwitcherPanel {
         let panel = SwitcherPanel(contentRect: .zero,
                                   styleMask: [.borderless, .nonactivatingPanel],
                                   backing: .buffered, defer: false)
         // Dock·메뉴 막대 바로 아래: Mission Control 처럼 둘은 그대로 보이고 일반 윈도우만 덮는다.
         panel.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.dockWindow)) - 1)
-        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
+        panel.collectionBehavior = Self.joinAllSpaces
+        guard interactive else {
+            panel.isOpaque = false
+            panel.backgroundColor = .clear
+            panel.hasShadow = false
+            panel.hidesOnDeactivate = false
+            panel.isReleasedWhenClosed = false
+            panel.animationBehavior = .none
+            panel.ignoresMouseEvents = true
+            panel.contentView = NSHostingView(rootView: SwitcherView(model: model))
+            return panel
+        }
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.hasShadow = false
@@ -332,6 +352,8 @@ final class SwitcherController: NSObject, NSWindowDelegate {
     // 데스크탑이 바뀌었거나 곧 바뀌는 경우엔 닫지 않고 키 입력을 되찾는다.
     func windowDidResignKey(_ notification: Notification) {
         guard phase == .open else { return }
+        // 전환 애니메이션 중: 선택기는 떠나는 데스크탑에 묶여 있으니 앞으로 꺼내면 안 된다 (되돌아간다).
+        if pendingSpace != nil { return }
         if Self.activeSpace() != openedSpace {
             panel?.makeKeyAndOrderFront(nil) // 전환 알림보다 먼저 왔다: 곧 followSpaceChange 가 채운다
             return
@@ -356,10 +378,83 @@ final class SwitcherController: NSObject, NSWindowDelegate {
     private var lastSpaceFollow: Date?
     private var lastDesktopMove: Date?
 
-    /// 데스크탑 이동 단축키를 누르기 직전에 알린다. 열려 있으면 닫지 않고 새 데스크탑으로 따라간다.
-    func noteDesktopMove() {
-        guard phase == .open else { return }
+    // MARK: 데스크탑 전환 애니메이션에 태우기
+
+    /// 단축키로 옮겨 가는 중인 데스크탑과 그곳에서 보일 윈도우
+    private var pendingSpace: Int?
+    private var pendingWindows: [WindowInfo] = []
+    /// 옮겨 갈 데스크탑에 미리 올려 두는 두 번째 선택기 (그 데스크탑의 윈도우로 채워져 있다)
+    private var arrivalPanel: SwitcherPanel?
+    private let arrivalModel = SwitcherModel()
+
+    private static let joinAllSpaces: NSWindow.CollectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
+    private static let ownSpaceOnly: NSWindow.CollectionBehavior = [.fullScreenAuxiliary, .ignoresCycle]
+
+    /// 데스크탑 이동 단축키를 누른 순간, 실제 전환 전에 준비한다.
+    ///
+    /// 선택기를 흉내 낸 애니메이션으로 밀면 macOS 의 전환과 어긋난다. 대신 macOS 의 진짜 전환에 태운다:
+    /// 지금 선택기는 지금 데스크탑에만 남기고, 옮겨 갈 데스크탑에는 그곳 윈도우로 채운 선택기를 미리 올려 둔다.
+    /// 그러면 데스크탑이 밀릴 때 두 선택기가 각자 자기 데스크탑과 함께 밀린다 (끝에서 튕기는 것까지 macOS 그대로).
+    func beginDesktopMove(_ direction: DesktopSwitcher.Direction) {
+        guard phase == .open, pendingSpace == nil, let panel else { return }
         lastDesktopMove = Date()
+        let cid = CGSMainConnectionID()
+        let from = Int(Self.activeSpace())
+        guard let target = SpaceMap.current().neighbor(of: from, by: direction == .right ? 1 : -1),
+              let predicted = WindowCatalog.shared.windows(onSpace: target).map(WindowCatalog.applyPreferences)
+        else { return } // 맨 끝 데스크탑(macOS 가 튕긴다) 또는 목록 캐시 없음(도착한 뒤 채운다)
+
+        // 옮겨 갈 데스크탑의 선택기: 지금 선택기와 같은 화면·같은 모습으로 꾸려 그 데스크탑에 올린다.
+        let arrival = arrivalPanel ?? makePanel(model: arrivalModel, interactive: false)
+        arrivalPanel = arrival
+        arrivalModel.safeInsets = model.safeInsets
+        arrivalModel.contentRect = model.contentRect
+        arrivalModel.pageWidth = model.pageWidth
+        arrivalModel.screenOrigin = model.screenOrigin
+        arrivalModel.thumbnails = model.thumbnails
+        arrivalModel.wallpaper = model.wallpaper
+        arrivalModel.expanded = true
+        arrivalModel.load(predicted, frontmostPID: nil, displays: model.displays, display: model.display)
+        arrival.collectionBehavior = Self.ownSpaceOnly
+        arrival.setFrame(panel.frame, display: false)
+        // 지금 선택기 바로 뒤에 놓아(화면을 덮고 있어 보이지 않는다) 완전히 그려 둔 다음 옮긴다.
+        // 투명하게 띄워 옮기면 그 데스크탑이 보일 때까지 다시 그려지지 않아 전환 중에 비어 보인다.
+        arrival.alphaValue = 1
+        arrival.order(.below, relativeTo: panel.windowNumber)
+        arrival.contentView?.layoutSubtreeIfNeeded()
+        arrival.display()
+
+        // 지금 선택기는 지금 데스크탑에만 남겨, 데스크탑과 함께 밀려 나가게 한다.
+        panel.collectionBehavior = Self.ownSpaceOnly
+        SLSMoveWindowsToManagedSpace(cid, [panel.windowNumber] as CFArray, UInt64(from))
+        pendingSpace = target
+        pendingWindows = predicted
+
+        // SwiftUI 가 새 내용을 다 그린 다음 프레임에 옮긴다 (실제 전환은 키를 뗀 뒤라 충분히 앞선다).
+        DispatchQueue.main.async {
+            guard self.pendingSpace == target else { return }
+            arrival.display()
+            SLSMoveWindowsToManagedSpace(cid, [arrival.windowNumber] as CFArray, UInt64(target))
+            let landed = SpaceMap.spaces(of: CGWindowID(arrival.windowNumber))
+            // 문제 진단용: `defaults read app.unmouse.Unmouse lastDesktopMove`
+            UserDefaults.standard.set("from=\(from) target=\(target) arrivalSpaces=\(landed)", forKey: "lastDesktopMove")
+            if landed != [target] { self.finishDesktopMove() } // 이 macOS 에서 옮길 수 없다: 도착한 뒤 채운다
+        }
+
+        // 전환이 일어나지 않으면(다른 앱이 단축키를 가로채는 등) 원래대로 되돌린다.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            guard self.pendingSpace == target, Int(Self.activeSpace()) != target else { return }
+            self.finishDesktopMove()
+        }
+    }
+
+    /// 두 번째 선택기를 내리고 원래 선택기를 다시 모든 데스크탑에 둔다.
+    private func finishDesktopMove() {
+        pendingSpace = nil
+        pendingWindows = []
+        panel?.collectionBehavior = Self.joinAllSpaces
+        if phase == .open { panel?.makeKeyAndOrderFront(nil) }
+        arrivalPanel?.orderOut(nil)
     }
 
     // MARK: 키 처리

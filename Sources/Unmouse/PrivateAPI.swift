@@ -7,6 +7,10 @@ import ApplicationServices
 @_silgen_name("CGSMainConnectionID")
 func CGSMainConnectionID() -> Int32
 
+/// 이 앱의 윈도우를 특정 Space 로 옮긴다 (데스크탑 전환 애니메이션에 선택기를 태우기 위해).
+@_silgen_name("SLSMoveWindowsToManagedSpace")
+func SLSMoveWindowsToManagedSpace(_ cid: Int32, _ windows: CFArray, _ space: UInt64)
+
 @_silgen_name("CGSGetActiveSpace")
 func CGSGetActiveSpace(_ cid: Int32) -> UInt64
 
@@ -66,6 +70,15 @@ struct SpaceMap {
     var labels: [Int: String] = [:]
     /// Space id → 정렬용 순서
     var order: [Int: Int] = [:]
+    /// 디스플레이마다 왼쪽 → 오른쪽 순서의 Space id
+    var displaySpaces: [[Int]] = []
+
+    /// active 와 같은 디스플레이에서 delta 칸 옆 Space. 끝이면 nil.
+    func neighbor(of active: Int, by delta: Int) -> Int? {
+        guard let spaces = displaySpaces.first(where: { $0.contains(active) }),
+              let index = spaces.firstIndex(of: active), spaces.indices.contains(index + delta) else { return nil }
+        return spaces[index + delta]
+    }
 
     static func current() -> SpaceMap {
         var map = SpaceMap()
@@ -76,8 +89,11 @@ struct SpaceMap {
             if let cur = display["Current Space"] as? [String: Any], let id = spaceID(cur) {
                 map.visible.insert(id)
             }
+            var ids: [Int] = []
+            defer { map.displaySpaces.append(ids) }
             for space in display["Spaces"] as? [[String: Any]] ?? [] {
                 guard let id = spaceID(space) else { continue }
+                ids.append(id)
                 index += 1
                 map.order[id] = index
                 if (space["type"] as? Int ?? 0) == 0 {

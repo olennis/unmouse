@@ -212,7 +212,7 @@ final class SwitcherModel: ObservableObject {
     private var slideToken = 0
 
     /// 지금 페이지를 고정해 두고, 새 데스크탑의 윈도우로 채운 페이지를 옆에서 밀어 넣는다.
-    func slide(to newWindows: [WindowInfo], direction: CGFloat) {
+    func slide(to newWindows: [WindowInfo], direction: CGFloat, fade: Bool = false) {
         let snapshot = outgoing == nil || slideProgress >= 1
             ? PageSnapshot(items: items, frames: layout.frames, thumbnails: thumbnails, hints: hints,
                            selectedID: selectedID, wallpaper: wallpaper)
@@ -224,7 +224,7 @@ final class SwitcherModel: ObservableObject {
         withTransaction(transaction) {
             outgoing = snapshot
             slideDirection = direction
-            slideFades = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+            slideFades = fade || NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
             slideProgress = 0
             // 새 데스크탑에서는 "지금 쓰던 윈도우 건너뛰기"가 필요 없으니 맨 앞 윈도우를 고른다.
             load(newWindows, frontmostPID: nil, displays: displays, display: display)
@@ -232,7 +232,8 @@ final class SwitcherModel: ObservableObject {
         // 고정한 장면이 한 번 그려진 다음 밀기 시작한다.
         DispatchQueue.main.async {
             guard token == self.slideToken else { return }
-            let animation: Animation = self.slideFades ? .easeInOut(duration: 0.3) : .smooth(duration: 0.42)
+            // macOS 데스크탑 전환처럼 처음에 빠르게 출발해 부드럽게 멈춘다.
+            let animation: Animation = self.slideFades ? .easeInOut(duration: 0.22) : .spring(response: 0.36, dampingFraction: 1)
             withAnimation(animation) {
                 self.slideProgress = 1
             } completion: {

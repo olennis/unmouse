@@ -42,20 +42,18 @@ enum DevTests {
             // 선택기를 연 채로 데스크탑을 옮길 때 페이지가 통째로 밀리는지 화면을 연달아 찍어 본다.
             let (go, back): (CGKeyCode, CGKeyCode) = isLastDesktop(cid) ? (123, 124) : (124, 123)
             press(48, holding: [option]); wait(0.8)
-            let startSpace = CGSGetActiveSpace(cid)
             DispatchQueue.global().async { press(go, holding: [control, command], extra: .maskSecondaryFn) }
-            // 데스크탑이 바뀌는 순간을 기다렸다가, 그때부터 짧은 간격으로 찍는다.
-            let deadline = Date().addingTimeInterval(3)
-            while CGSGetActiveSpace(cid) == startSpace, Date() < deadline { usleep(5_000) }
-            let changed = Date()
-            lines.append("space changed after press")
-            for (i, t) in [0.0, 0.08, 0.16, 0.24, 0.32, 0.6].enumerated() {
-                wait(max(0, t - Date().timeIntervalSince(changed)))
+            // 단축키를 누른 순간부터 짧은 간격으로 찍는다: 누르자마자 페이지가 움직여야 한다.
+            let pressed = Date()
+            let times = CommandLine.arguments.contains("late")
+                ? stride(from: 0.4, through: 1.3, by: 0.075).map { $0 } : [0.08, 0.14, 0.2, 0.28, 0.4, 1.2]
+            for (i, t) in times.enumerated() {
+                wait(max(0, t - Date().timeIntervalSince(pressed)))
                 let p = Process()
                 p.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
                 p.arguments = ["-x", "-t", "jpg", "\(directory)/slide-\(i).jpg"]
                 try? p.run()
-                lines.append(String(format: "shot %d at +%.2fs", i, Date().timeIntervalSince(changed)))
+                lines.append(String(format: "shot %d at +%.2fs space=%d", i, Date().timeIntervalSince(pressed), CGSGetActiveSpace(cid)))
             }
             wait(1.0)
             log("after slide")
