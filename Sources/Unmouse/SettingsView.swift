@@ -133,7 +133,7 @@ final class SettingsModel: ObservableObject {
 struct SettingsView: View {
     @ObservedObject var model: SettingsModel
     @AppStorage(Preferences.includeMinimized) private var includeMinimized = true
-    @AppStorage(Preferences.includeOtherSpaces) private var includeOtherSpaces = true
+    @AppStorage(Preferences.includeOtherSpaces) private var includeOtherSpaces = false
     @AppStorage(Preferences.showMenuBarIcon) private var showMenuBarIcon = true
 
     var body: some View {

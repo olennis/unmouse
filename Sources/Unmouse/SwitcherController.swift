@@ -331,7 +331,8 @@ enum Preferences {
     static let showMenuBarIcon = "showMenuBarIcon"
 
     static func registerDefaults() {
-        UserDefaults.standard.register(defaults: [includeMinimized: true, includeOtherSpaces: true, showMenuBarIcon: true])
+        // 선택기는 기본으로 지금 데스크탑의 윈도우만 보여 준다. 다른 데스크탑은 설정에서 켠다.
+        UserDefaults.standard.register(defaults: [includeMinimized: true, includeOtherSpaces: false, showMenuBarIcon: true])
     }
 }
 
