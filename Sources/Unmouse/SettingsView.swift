@@ -212,6 +212,7 @@ struct SettingsView: View {
                 usageRow(["←", "↑", "↓", "→"], L10n.text("Move selection (also Tab / ⇧Tab)"))
                 usageRow(["Space"], L10n.text("Switch to selected window (also ↩)"))
                 usageRow(["/"], L10n.text("Search by app or window title (↩ to select while searching)"))
+                usageRow(["`"], L10n.text("Show windows on the next display (⇧` for the previous one)"))
                 usageRow(["esc"], L10n.text("Close"))
             }
 

@@ -17,6 +17,8 @@ All three shortcuts can be changed in Settings.
 
 Shows the windows from all of your desktops as previews. Press the letter on a preview to jump straight to that window.
 
+With more than one display, the switcher opens on the display you are working on and shows only that display's windows. Press `` ` `` to move to the next display (`` ⇧` `` for the previous one).
+
 In the screenshot above, pressing `S` jumps to Terminal, and `F` jumps to Calendar on another desktop. Minimized windows are shown too.
 
 Press `/` and type to filter by app name or window title.
@@ -30,6 +32,7 @@ Press `/` and type to filter by app name or window title.
 | `←` `↑` `↓` `→` | Move the selection (`Tab` / `⇧Tab` also work) |
 | `Space` | Go to the selected window (`↩` also works) |
 | `/` | Search by app name or window title (press `↩` to select while searching) |
+| `` ` `` | Show the windows on the next display (`` ⇧` `` for the previous one) |
 | `⌘,` | Open Settings |
 | `esc` | Close |
 

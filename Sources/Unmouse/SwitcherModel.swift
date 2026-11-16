@@ -21,6 +21,48 @@ struct HintKey {
     ].map { HintKey(keyCode: UInt16($0.0), label: $0.1) }
 }
 
+/// 연결된 디스플레이 하나. 선택기는 한 번에 한 디스플레이의 윈도우만 펼친다.
+struct SwitcherDisplay: Equatable {
+    let id: CGDirectDisplayID
+    let name: String
+    /// CoreGraphics 좌표(주 화면 왼쪽 위 원점)의 화면 영역
+    let frame: CGRect
+    let scale: CGFloat
+
+    /// 왼쪽 → 오른쪽(같으면 위 → 아래) 순서. 디스플레이 전환 키가 이 순서로 돈다.
+    @MainActor
+    static func all() -> [SwitcherDisplay] {
+        let primaryHeight = NSScreen.screens.first?.frame.height ?? 0
+        return NSScreen.screens.compactMap { screen -> SwitcherDisplay? in
+            guard let id = screen.displayID else { return nil }
+            let frame = CGRect(x: screen.frame.minX, y: primaryHeight - screen.frame.maxY,
+                               width: screen.frame.width, height: screen.frame.height)
+            return SwitcherDisplay(id: id, name: screen.localizedName, frame: frame, scale: screen.backingScaleFactor)
+        }
+        .sorted { ($0.frame.minX, $0.frame.minY) < ($1.frame.minX, $1.frame.minY) }
+    }
+
+    /// 윈도우가 속한 디스플레이: 가장 많이 겹치는 화면, 어디와도 겹치지 않으면 가장 가까운 화면.
+    /// 다른 데스크탑·최소화된 윈도우도 마지막 위치를 그대로 갖고 있어서 같은 방식으로 판별된다.
+    static func owner(of frame: CGRect, among displays: [SwitcherDisplay]) -> SwitcherDisplay? {
+        func overlap(_ d: SwitcherDisplay) -> CGFloat {
+            let r = d.frame.intersection(frame)
+            return r.isNull ? 0 : r.width * r.height
+        }
+        if let best = displays.max(by: { overlap($0) < overlap($1) }), overlap(best) > 0 { return best }
+        func distance(_ d: SwitcherDisplay) -> CGFloat {
+            hypot(d.frame.midX - frame.midX, d.frame.midY - frame.midY)
+        }
+        return displays.min { distance($0) < distance($1) }
+    }
+}
+
+extension NSScreen {
+    var displayID: CGDirectDisplayID? {
+        deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID
+    }
+}
+
 /// Mission Control 식 배치: 윈도우의 실제 크기 비율과 화면에서의 상대 위치(위/아래, 왼쪽/오른쪽)를 유지하면서
 /// 서로 겹치지 않게 줄 단위로 펼친다.
 struct MissionLayout {
@@ -130,14 +172,29 @@ final class SwitcherModel: ObservableObject {
     /// 패널이 덮는 화면의 CoreGraphics 좌표 원점
     var screenOrigin = CGPoint.zero
 
+    /// 연결된 디스플레이 (전환 순서대로)
+    @Published private(set) var displays: [SwitcherDisplay] = []
+    /// 지금 펼치고 있는 디스플레이. nil 이면 디스플레이로 거르지 않는다 (데모 등).
+    @Published private(set) var display: SwitcherDisplay?
+
+    /// 모든 디스플레이의 윈도우
+    private var allWindows: [WindowInfo] = []
+    /// 그중 지금 디스플레이에 있는 윈도우
     private var windows: [WindowInfo] = []
     private(set) var hints: [CGWindowID: String] = [:]
     private var hintTargets: [UInt16: CGWindowID] = [:]
+    /// 디스플레이마다 찍어 둔 바탕화면
+    private var wallpapers: [CGDirectDisplayID: CGImage] = [:]
 
     var selected: WindowInfo? { items.first { $0.id == selectedID } }
 
-    func load(_ newWindows: [WindowInfo], frontmostPID: pid_t?) {
-        windows = newWindows
+    func load(_ newWindows: [WindowInfo], frontmostPID: pid_t?,
+              displays: [SwitcherDisplay] = [], display: SwitcherDisplay? = nil) {
+        self.displays = displays
+        self.display = display
+        allWindows = newWindows
+        windows = filterToDisplay(newWindows)
+        if let display, let image = wallpapers[display.id] { wallpaper = image }
         isSearching = false
         query = ""
         accessibilityGranted = AXIsProcessTrusted()
@@ -146,11 +203,27 @@ final class SwitcherModel: ObservableObject {
         assignHints()
 
         // 맨 앞 윈도우가 지금 쓰고 있는 윈도우라면, 바로 Enter 로 "직전 윈도우"에 갈 수 있게 그다음 것을 선택한다.
-        if newWindows.count > 1, newWindows[0].pid == frontmostPID, newWindows[0].location == .visible {
-            selectedID = newWindows[1].id
+        if windows.count > 1, windows[0].pid == frontmostPID, windows[0].location == .visible {
+            selectedID = windows[1].id
         } else {
-            selectedID = newWindows.first?.id
+            selectedID = windows.first?.id
         }
+    }
+
+    /// 열려 있는 상태에서 다른 디스플레이로 옮긴다. 화면 영역(contentRect 등)은 호출하는 쪽이 먼저 바꿔 둔다.
+    func switchDisplay(to display: SwitcherDisplay) {
+        self.display = display
+        windows = filterToDisplay(allWindows)
+        wallpaper = wallpapers[display.id]
+        endSearch()
+        relayout()
+        assignHints()
+        selectedID = windows.first?.id
+    }
+
+    private func filterToDisplay(_ list: [WindowInfo]) -> [WindowInfo] {
+        guard let display, displays.count > 1 else { return list }
+        return list.filter { SwitcherDisplay.owner(of: $0.frame, among: displays)?.id == display.id }
     }
 
     private func assignHints() {
@@ -164,10 +237,12 @@ final class SwitcherModel: ObservableObject {
 
     /// 열린 뒤 도착한 정확한 목록을 반영한다. 구성이 그대로면 아무것도 건드리지 않는다 (힌트 글자가 바뀌면 안 되므로).
     func update(_ newWindows: [WindowInfo]) {
-        let same = newWindows.count == windows.count
-            && zip(newWindows, windows).allSatisfy { $0.id == $1.id && $0.location == $1.location }
+        allWindows = newWindows
+        let filtered = filterToDisplay(newWindows)
+        let same = filtered.count == windows.count
+            && zip(filtered, windows).allSatisfy { $0.id == $1.id && $0.location == $1.location }
         guard !same else { return }
-        windows = newWindows
+        windows = filtered
         relayout()
         if query.isEmpty { assignHints() }
     }
@@ -252,7 +327,7 @@ final class SwitcherModel: ObservableObject {
                 return
             }
             let shareable = Dictionary(content.windows.map { ($0.windowID, $0) }, uniquingKeysWith: { a, _ in a })
-            if self?.wallpaper == nil { await self?.refreshWallpaper(from: content) }
+            if self?.wallpaper == nil { await self?.refreshWallpapers(from: content) }
             while !Task.isCancelled {
                 await Self.captureRound(targets, shareable, maxPixelSize) { id, image in
                     guard !Task.isCancelled else { return }
@@ -281,7 +356,7 @@ final class SwitcherModel: ObservableObject {
             defer { self?.prewarmTask = nil }
             guard let content = try? await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false) else { return }
             let shareable = Dictionary(content.windows.map { ($0.windowID, $0) }, uniquingKeysWith: { a, _ in a })
-            await self?.refreshWallpaper(from: content)
+            await self?.refreshWallpapers(from: content)
             await Self.captureRound(targets, shareable, maxPixelSize) { id, image in
                 guard let self, self.thumbnailTask == nil else { return } // 열려 있으면 실시간 캡처가 담당
                 self.thumbnails[id] = image
@@ -294,10 +369,18 @@ final class SwitcherModel: ObservableObject {
 
     private var prewarmTask: Task<Void, Never>?
 
-    private func refreshWallpaper(from content: SCShareableContent) async {
-        guard let screen = Wallpaper.mainScreen(),
-              let image = await Wallpaper.capture(from: content, screenFrame: screen.frame, scale: screen.scale) else { return }
-        wallpaper = image
+    /// 모든 디스플레이의 바탕화면을 찍어 둔다. 디스플레이를 전환하면 그 화면의 것으로 바꿔 깐다.
+    private func refreshWallpapers(from content: SCShareableContent) async {
+        let targets = SwitcherDisplay.all()
+        var fresh: [CGDirectDisplayID: CGImage] = [:]
+        for target in targets {
+            if let image = await Wallpaper.capture(from: content, screenFrame: target.frame, scale: target.scale) {
+                fresh[target.id] = image
+            }
+        }
+        wallpapers = fresh
+        let shown = display ?? Wallpaper.mainScreen().flatMap { main in targets.first { $0.frame == main.frame } }
+        if let shown, let image = fresh[shown.id] { wallpaper = image }
     }
 
     func stopLiveThumbnails() {
