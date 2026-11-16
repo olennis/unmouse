@@ -38,6 +38,34 @@ enum DevTests {
         default: break
         }
 
+        if scenario == "slide" {
+            // 선택기를 연 채로 데스크탑을 옮길 때 페이지가 통째로 밀리는지 화면을 연달아 찍어 본다.
+            let (go, back): (CGKeyCode, CGKeyCode) = isLastDesktop(cid) ? (123, 124) : (124, 123)
+            press(48, holding: [option]); wait(0.8)
+            let startSpace = CGSGetActiveSpace(cid)
+            DispatchQueue.global().async { press(go, holding: [control, command], extra: .maskSecondaryFn) }
+            // 데스크탑이 바뀌는 순간을 기다렸다가, 그때부터 짧은 간격으로 찍는다.
+            let deadline = Date().addingTimeInterval(3)
+            while CGSGetActiveSpace(cid) == startSpace, Date() < deadline { usleep(5_000) }
+            let changed = Date()
+            lines.append("space changed after press")
+            for (i, t) in [0.0, 0.08, 0.16, 0.24, 0.32, 0.6].enumerated() {
+                wait(max(0, t - Date().timeIntervalSince(changed)))
+                let p = Process()
+                p.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+                p.arguments = ["-x", "-t", "jpg", "\(directory)/slide-\(i).jpg"]
+                try? p.run()
+                lines.append(String(format: "shot %d at +%.2fs", i, Date().timeIntervalSince(changed)))
+            }
+            wait(1.0)
+            log("after slide")
+            press(53); wait(0.6)
+            press(back, holding: [control, command], extra: .maskSecondaryFn); wait(1.5)
+            log("back")
+            try? lines.joined(separator: "\n").write(toFile: "\(directory)/desktop.txt", atomically: true, encoding: .utf8)
+            return
+        }
+
         if scenario == "edge" {
             // 맨 오른쪽 데스크탑에서 더 오른쪽으로: 넘어갈 곳이 없어도 선택기가 닫히면 안 된다.
             var moved = false

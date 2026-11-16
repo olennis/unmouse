@@ -205,6 +205,7 @@ final class SwitcherController: NSObject, NSWindowDelegate {
                               trailing: screen.frame.maxX - visible.maxX)
         if model.safeInsets != safe { model.safeInsets = safe }
         model.contentRect = SwitcherInsets.contentRect(size: screen.frame.size, safe: safe)
+        model.pageWidth = screen.frame.width
     }
 
     /// 열려 있는 선택기를 다음(또는 이전) 디스플레이로 옮겨 그 화면의 윈도우를 펼친다.
@@ -260,22 +261,39 @@ final class SwitcherController: NSObject, NSWindowDelegate {
 
     /// 열린 채로 데스크탑이 바뀌면(⌃⌘→, 트랙패드 스와이프) 닫지 않고 그 데스크탑의 윈도우로 다시 채운다.
     /// 패널은 모든 데스크탑에 함께 있으므로 그대로 따라오고, 키 입력만 되찾는다.
+    /// 페이지는 macOS 데스크탑 전환처럼 통째로 옆으로 밀려 바뀐다 (패널이 화면을 덮고 있어 실제 전환은 가려진다).
     private func followSpaceChange() {
         guard phase == .open else { return }
-        openedSpace = Self.activeSpace()
+        let previous = openedSpace
+        let current = Self.activeSpace()
+        guard current != previous else { return }
+        openedSpace = current
         spaceChangedWhileOpen = true
         lastSpaceFollow = Date()
         panel?.makeKeyAndOrderFront(nil)
+
+        // 오른쪽(순서가 뒤인) 데스크탑으로 가면 페이지가 왼쪽으로 밀린다.
+        let order = SpaceMap.current().order
+        let direction: CGFloat = (order[Int(current)] ?? 0) >= (order[Int(previous)] ?? 0) ? 1 : -1
+
+        // 밀기는 바로 시작해야 하므로 지연 없는 목록으로 채우고, 정확한 목록은 뒤에서 바로잡는다.
+        let quick = WindowCatalog.shared.quickList().map(WindowCatalog.applyPreferences)
+        if let quick {
+            model.slide(to: quick, direction: direction)
+            model.startLiveThumbnails(maxPixelSize: Self.thumbnailPixels)
+        }
+        model.refreshWallpaper()
+
         DispatchQueue.global(qos: .userInteractive).async {
             let windows = WindowCatalog.applyPreferences(WindowCatalog.shared.refresh())
             Task { @MainActor in
-                guard self.phase == .open else { return }
-                withAnimation(.snappy(duration: 0.25)) {
-                    // 새 데스크탑에서는 "지금 쓰던 윈도우 건너뛰기"가 필요 없으니 맨 앞 윈도우를 고른다.
-                    self.model.load(windows, frontmostPID: nil, displays: self.model.displays, display: self.model.display)
+                guard self.phase == .open, self.openedSpace == current else { return }
+                if quick == nil {
+                    self.model.slide(to: windows, direction: direction)
+                } else {
+                    self.model.update(windows)
                 }
                 self.model.startLiveThumbnails(maxPixelSize: Self.thumbnailPixels)
-                self.model.refreshWallpaper()
                 self.panel?.makeKeyAndOrderFront(nil)
             }
         }
