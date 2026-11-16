@@ -74,9 +74,9 @@ final class SwitcherController: NSObject, NSWindowDelegate {
                 Task { @MainActor in self?.scheduleRefresh(captureThumbnails: true) }
             }
         }
-        // 열린 채로 데스크탑이 바뀌면(⌃⌘→, 트랙패드 스와이프) 바뀐 그 순간에 닫는다.
+        // 열린 채로 데스크탑이 바뀌면(⌃⌘→, 트랙패드 스와이프) 그 데스크탑의 윈도우로 다시 채운다.
         center.addObserver(forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
-            Task { @MainActor in self?.dismissForSpaceChange() }
+            Task { @MainActor in self?.followSpaceChange() }
         }
         // 새 윈도우·제목 변경 등 알림이 오지 않는 변화는 주기적으로 따라잡는다 (목록만, 캡처는 안 함).
         timer = Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { [weak self] _ in
@@ -164,6 +164,8 @@ final class SwitcherController: NSObject, NSWindowDelegate {
         panel.displayIfNeeded()
         panel.makeKeyAndOrderFront(nil)
         phase = .open
+        openedSpace = Self.activeSpace()
+        spaceChangedWhileOpen = false
 
         // 카드가 실제 윈도우 위에 겹쳐진 상태에서 곧바로 Mission Control 배치로 펼쳐진다.
         // (접힌 상태가 먼저 한 번 그려져야 그 자리에서 출발하는 애니메이션이 된다)
@@ -230,12 +232,16 @@ final class SwitcherController: NSObject, NSWindowDelegate {
         if let window {
             model.selectedID = window.id
             model.raisedID = window.id
+        }
+        // 열린 뒤 데스크탑을 옮겨 왔다면, 그냥 닫아도 키 입력이 이전 데스크탑의 앱으로 돌아가
+        // 화면이 되돌아가지 않도록 지금 데스크탑의 맨 앞 윈도우에 준다.
+        let target = window ?? (spaceChangedWhileOpen ? model.frontVisibleWindow : nil)
+        if let target {
             // 애니메이션이 끝날 때 실제 윈도우가 이미 맨 앞에 와 있도록 먼저 전환한다.
-            DispatchQueue.global(qos: .userInteractive).async { WindowFocuser.focus(window) }
+            DispatchQueue.global(qos: .userInteractive).async { WindowFocuser.focus(target) }
         }
         withAnimation(.easeInOut(duration: Self.collapseDuration)) { model.expanded = false }
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.collapseDuration + 0.02) {
-            guard self.phase == .closing else { return } // 그사이 데스크탑 전환으로 이미 내렸다
             self.panel?.orderOut(nil)
             self.model.endSearch()
             self.phase = .closed
@@ -243,29 +249,36 @@ final class SwitcherController: NSObject, NSWindowDelegate {
         }
     }
 
-    /// 데스크탑이 바뀐 순간 애니메이션 없이 바로 내린다.
-    ///
-    /// 미리 닫으면(⌃⌘→ 를 누른 순간) 실제 전환은 키를 뗀 뒤에야 일어나서, 그 사이 키 입력이
-    /// 원래 데스크탑의 윈도우로 돌아간다. 패널을 전환 순간까지 띄워 두면 그 틈이 없다.
-    /// 그래도 키 입력이 다른 데스크탑의 윈도우에 남아 있으면 새 데스크탑의 맨 앞 윈도우로 옮긴다.
-    private func dismissForSpaceChange() {
-        guard phase == .open || phase == .closing || phase == .loading else { return }
-        let wasLoading = phase == .loading
-        phase = .closed
-        guard !wasLoading else { return }
-        model.stopLiveThumbnails()
-        var transaction = Transaction()
-        transaction.disablesAnimations = true
-        withTransaction(transaction) {
-            model.expanded = false
-            model.raisedID = nil
+    // MARK: 데스크탑 전환
+
+    /// 선택기를 연(또는 마지막으로 따라간) 데스크탑
+    private var openedSpace: UInt64 = 0
+    /// 열려 있는 동안 데스크탑을 옮겼는지
+    private var spaceChangedWhileOpen = false
+
+    private static func activeSpace() -> UInt64 { CGSGetActiveSpace(CGSMainConnectionID()) }
+
+    /// 열린 채로 데스크탑이 바뀌면(⌃⌘→, 트랙패드 스와이프) 닫지 않고 그 데스크탑의 윈도우로 다시 채운다.
+    /// 패널은 모든 데스크탑에 함께 있으므로 그대로 따라오고, 키 입력만 되찾는다.
+    private func followSpaceChange() {
+        guard phase == .open else { return }
+        openedSpace = Self.activeSpace()
+        spaceChangedWhileOpen = true
+        lastSpaceFollow = Date()
+        panel?.makeKeyAndOrderFront(nil)
+        DispatchQueue.global(qos: .userInteractive).async {
+            let windows = WindowCatalog.applyPreferences(WindowCatalog.shared.refresh())
+            Task { @MainActor in
+                guard self.phase == .open else { return }
+                withAnimation(.snappy(duration: 0.25)) {
+                    // 새 데스크탑에서는 "지금 쓰던 윈도우 건너뛰기"가 필요 없으니 맨 앞 윈도우를 고른다.
+                    self.model.load(windows, frontmostPID: nil, displays: self.model.displays, display: self.model.display)
+                }
+                self.model.startLiveThumbnails(maxPixelSize: Self.thumbnailPixels)
+                self.model.refreshWallpaper()
+                self.panel?.makeKeyAndOrderFront(nil)
+            }
         }
-        panel?.orderOut(nil)
-        model.endSearch()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            DispatchQueue.global(qos: .userInteractive).async { WindowFocuser.focusCurrentDesktopIfNeeded() }
-        }
-        scheduleRefresh(captureThumbnails: true, delay: 0.4)
     }
 
     private func activate(_ window: WindowInfo) {
@@ -297,8 +310,38 @@ final class SwitcherController: NSObject, NSWindowDelegate {
     }
 
     // 다른 앱을 클릭하는 등 포커스를 잃으면 닫는다.
+    // 데스크탑 전환 중에는 macOS 가 새 데스크탑의 앱을 잠깐 앞으로 꺼내며 포커스를 가져가므로,
+    // 데스크탑이 바뀌었거나 곧 바뀌는 경우엔 닫지 않고 키 입력을 되찾는다.
     func windowDidResignKey(_ notification: Notification) {
-        close() // 이미 닫히는 중이면 무시된다
+        guard phase == .open else { return }
+        if Self.activeSpace() != openedSpace {
+            panel?.makeKeyAndOrderFront(nil) // 전환 알림보다 먼저 왔다: 곧 followSpaceChange 가 채운다
+            return
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            guard self.phase == .open, self.panel?.isKeyWindow == false else { return }
+            if Self.activeSpace() != self.openedSpace || self.spaceChangedRecently {
+                self.panel?.makeKeyAndOrderFront(nil)
+            } else {
+                self.close()
+            }
+        }
+    }
+
+    /// 방금 데스크탑을 따라왔거나(0.6초) Unmouse 가 데스크탑 이동을 보냈다(1초):
+    /// 그 직후의 포커스 이동은 전환 때문이다. 맨 끝 데스크탑에서 더 가려 하면 Dock 이 튕기며 포커스를 잠깐 가져간다.
+    private var spaceChangedRecently: Bool {
+        if let at = lastSpaceFollow, Date().timeIntervalSince(at) < 0.6 { return true }
+        if let at = lastDesktopMove, Date().timeIntervalSince(at) < 1.0 { return true }
+        return false
+    }
+    private var lastSpaceFollow: Date?
+    private var lastDesktopMove: Date?
+
+    /// 데스크탑 이동 단축키를 누르기 직전에 알린다. 열려 있으면 닫지 않고 새 데스크탑으로 따라간다.
+    func noteDesktopMove() {
+        guard phase == .open else { return }
+        lastDesktopMove = Date()
     }
 
     // MARK: 키 처리

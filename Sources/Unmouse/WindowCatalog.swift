@@ -292,21 +292,6 @@ enum WindowFocuser {
         }
     }
 
-    /// 키 입력을 받는 윈도우가 지금 보이는 데스크탑에 없으면, 이 데스크탑의 맨 앞 윈도우로 옮긴다.
-    /// (데스크탑 전환 직후 키 입력이 이전 데스크탑의 윈도우에 남는 경우를 바로잡는다)
-    static func focusCurrentDesktopIfNeeded() {
-        let visibleSpaces = SpaceMap.current().visible
-        if let app: AXUIElement = AXUIElementCreateSystemWide().attribute(kAXFocusedApplicationAttribute),
-           let window: AXUIElement = app.attribute(kAXFocusedWindowAttribute),
-           let wid = window.windowID {
-            let spaces = SpaceMap.spaces(of: wid)
-            if spaces.isEmpty || spaces.contains(where: visibleSpaces.contains) { return } // 이미 이 데스크탑
-        }
-        let top = WindowCatalog.shared.list(includeMinimized: false, includeOtherSpaces: false)
-            .first { $0.location == .visible }
-        if let top { focus(top) }
-    }
-
     /// 대상 윈도우가 키 입력을 받도록 WindowServer 이벤트를 직접 보낸다.
     private static func makeKeyWindow(_ psn: inout ProcessSerialNumber, _ wid: CGWindowID) {
         var wid = wid

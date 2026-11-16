@@ -17,7 +17,7 @@ All of these shortcuts can be changed in Settings.
 
 ## Window switcher — `⌥Tab`
 
-Shows the windows on the desktop you are on as previews. Press the letter on a preview to jump straight to that window. To include windows from your other desktops, turn on “Include windows on other desktops” in Settings.
+Shows the windows on the desktop you are on as previews. Press the letter on a preview to jump straight to that window. To include windows from your other desktops, turn on “Include windows on other desktops” in Settings. If you move to another desktop while the switcher is open (`⌃⌘←` / `⌃⌘→` or a trackpad swipe), it stays open and shows that desktop's windows.
 
 With more than one display, the switcher opens on the display you are working on and shows only that display's windows. Press `` ` `` to move to the next display (`` ⇧` `` for the previous one). From anywhere, ``⌥` `` opens the switcher straight on the next display with its front window selected, so `Space` moves your focus there.
 

@@ -38,6 +38,41 @@ enum DevTests {
         default: break
         }
 
+        if scenario == "edge" {
+            // 맨 오른쪽 데스크탑에서 더 오른쪽으로: 넘어갈 곳이 없어도 선택기가 닫히면 안 된다.
+            var moved = false
+            if !isLastDesktop(cid) { DesktopSwitcher.move(.right); wait(1.5); moved = true }
+            log("at last desktop")
+            press(48, holding: [option]); wait(0.6)
+            log("switcher open")
+            press(124, holding: [control, command], extra: .maskSecondaryFn); wait(1.5)
+            log("after ⌃⌘→ at edge (switcher should stay)")
+            press(53); wait(0.8)
+            log("after esc")
+            if moved { DesktopSwitcher.move(.left); wait(1.5) }
+            log("back")
+            try? lines.joined(separator: "\n").write(toFile: "\(directory)/desktop.txt", atomically: true, encoding: .utf8)
+            return
+        }
+
+        if scenario == "stay" || scenario == "stayesc" {
+            // ⌥Tab 으로 연 채로 ⌃⌘→: 선택기가 새 데스크탑에 남아 그 데스크탑 윈도우를 보여 줘야 한다.
+            // 맨 오른쪽 데스크탑에 있으면 왼쪽으로 갔다가 돌아온다.
+            let (go, back): (CGKeyCode, CGKeyCode) = isLastDesktop(cid) ? (123, 124) : (124, 123)
+            press(48, holding: [option]); wait(0.6)
+            log("switcher open")
+            press(go, holding: [control, command], extra: .maskSecondaryFn); wait(1.5)
+            log("after ⌃⌘\(go == 124 ? "→" : "←") (switcher should stay)")
+            screenshot("\(directory)/stay.png")
+            if scenario == "stay" { press(49) } else { press(53) } // Space: 맨 앞 윈도우 고르기 / esc: 닫기
+            wait(1.2)
+            log(scenario == "stay" ? "after Space" : "after esc")
+            press(back, holding: [control, command], extra: .maskSecondaryFn); wait(1.5)
+            log("back")
+            try? lines.joined(separator: "\n").write(toFile: "\(directory)/desktop.txt", atomically: true, encoding: .utf8)
+            return
+        }
+
         if scenario == "fast" {
             // 사용자가 보고한 순서: ⌥Tab 으로 연 채로 바로 ⌃⌘→. 넘어가는 동안 여러 시점의 포커스와 화면을 남긴다.
             press(48, holding: [option]); wait(0.5)
@@ -112,6 +147,25 @@ enum DevTests {
     }
 
     private static func wait(_ seconds: Double) { usleep(useconds_t(seconds * 1_000_000)) }
+
+    /// 지금 데스크탑이 그 디스플레이의 맨 오른쪽 데스크탑인지
+    private static func isLastDesktop(_ cid: Int32) -> Bool {
+        let active = Int(CGSGetActiveSpace(cid))
+        let displays = CGSCopyManagedDisplaySpaces(cid) as? [[String: Any]] ?? []
+        for display in displays {
+            let ids = (display["Spaces"] as? [[String: Any]] ?? []).compactMap { ($0["id64"] as? Int) ?? ($0["ManagedSpaceID"] as? Int) }
+            if let i = ids.firstIndex(of: active) { return i == ids.count - 1 }
+        }
+        return false
+    }
+
+    private static func screenshot(_ path: String) {
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+        p.arguments = ["-x", "-t", "png", path]
+        try? p.run()
+        p.waitUntilExit()
+    }
 
     /// 수정 키를 차례로 누르고, 키를 친 뒤, 잠시 유지했다가 놓는다 (사람이 누르는 순서 그대로).
     private static func press(_ keyCode: CGKeyCode, holding modifiers: [(CGKeyCode, CGEventFlags)] = [],

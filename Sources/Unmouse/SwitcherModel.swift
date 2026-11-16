@@ -188,6 +188,11 @@ final class SwitcherModel: ObservableObject {
 
     var selected: WindowInfo? { items.first { $0.id == selectedID } }
 
+    /// 지금 화면(데스크탑)에서 맨 앞에 있는 윈도우
+    var frontVisibleWindow: WindowInfo? {
+        windows.filter { $0.location == .visible }.min { $0.rank < $1.rank }
+    }
+
     func load(_ newWindows: [WindowInfo], frontmostPID: pid_t?,
               displays: [SwitcherDisplay] = [], display: SwitcherDisplay? = nil) {
         self.displays = displays
@@ -368,6 +373,15 @@ final class SwitcherModel: ObservableObject {
     }
 
     private var prewarmTask: Task<Void, Never>?
+
+    /// 데스크탑을 옮겨 왔을 때처럼 바탕화면이 바뀌었을 수 있으면 다시 찍는다.
+    func refreshWallpaper() {
+        guard CGPreflightScreenCaptureAccess() else { return }
+        Task { [weak self] in
+            guard let content = try? await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false) else { return }
+            await self?.refreshWallpapers(from: content)
+        }
+    }
 
     /// 모든 디스플레이의 바탕화면을 찍어 둔다. 디스플레이를 전환하면 그 화면의 것으로 바꿔 깐다.
     private func refreshWallpapers(from content: SCShareableContent) async {
