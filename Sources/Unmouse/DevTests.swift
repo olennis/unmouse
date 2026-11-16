@@ -38,6 +38,28 @@ enum DevTests {
         default: break
         }
 
+        if scenario == "fast" {
+            // 사용자가 보고한 순서: ⌥Tab 으로 연 채로 바로 ⌃⌘→. 넘어가는 동안 여러 시점의 포커스와 화면을 남긴다.
+            press(48, holding: [option]); wait(0.5)
+            log("switcher open")
+            let start = Date()
+            DispatchQueue.global().async { press(124, holding: [control, command], extra: .maskSecondaryFn) }
+            for (i, t) in [0.1, 0.25, 0.4, 0.6, 0.9, 1.5, 3.0].enumerated() {
+                wait(max(0, t - Date().timeIntervalSince(start)))
+                let shot = "\(directory)/fast-\(i).png"
+                let p = Process()
+                p.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+                p.arguments = ["-x", "-t", "png", shot]
+                try? p.run()
+                log(String(format: "t=%.2fs", Date().timeIntervalSince(start)))
+            }
+            wait(0.5)
+            DesktopSwitcher.move(.left); wait(1.5)
+            log("back")
+            try? lines.joined(separator: "\n").write(toFile: "\(directory)/desktop.txt", atomically: true, encoding: .utf8)
+            return
+        }
+
         if scenario == "swipe" {
             // 트랙패드 스와이프처럼 Unmouse 를 거치지 않고 데스크탑이 바뀌는 경우: 선택기를 연 채로 시스템 ⌃→
             press(48, holding: [option]); wait(0.8)

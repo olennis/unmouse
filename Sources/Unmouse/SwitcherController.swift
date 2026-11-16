@@ -74,6 +74,10 @@ final class SwitcherController: NSObject, NSWindowDelegate {
                 Task { @MainActor in self?.scheduleRefresh(captureThumbnails: true) }
             }
         }
+        // 열린 채로 데스크탑이 바뀌면(⌃⌘→, 트랙패드 스와이프) 바뀐 그 순간에 닫는다.
+        center.addObserver(forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.dismissForSpaceChange() }
+        }
         // 새 윈도우·제목 변경 등 알림이 오지 않는 변화는 주기적으로 따라잡는다 (목록만, 캡처는 안 함).
         timer = Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.scheduleRefresh(captureThumbnails: false) }
@@ -231,11 +235,37 @@ final class SwitcherController: NSObject, NSWindowDelegate {
         }
         withAnimation(.easeInOut(duration: Self.collapseDuration)) { model.expanded = false }
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.collapseDuration + 0.02) {
+            guard self.phase == .closing else { return } // 그사이 데스크탑 전환으로 이미 내렸다
             self.panel?.orderOut(nil)
             self.model.endSearch()
             self.phase = .closed
             self.scheduleRefresh(captureThumbnails: true, delay: 0.4) // 전환 결과를 다음 번을 위해 찍어 둔다
         }
+    }
+
+    /// 데스크탑이 바뀐 순간 애니메이션 없이 바로 내린다.
+    ///
+    /// 미리 닫으면(⌃⌘→ 를 누른 순간) 실제 전환은 키를 뗀 뒤에야 일어나서, 그 사이 키 입력이
+    /// 원래 데스크탑의 윈도우로 돌아간다. 패널을 전환 순간까지 띄워 두면 그 틈이 없다.
+    /// 그래도 키 입력이 다른 데스크탑의 윈도우에 남아 있으면 새 데스크탑의 맨 앞 윈도우로 옮긴다.
+    private func dismissForSpaceChange() {
+        guard phase == .open || phase == .closing || phase == .loading else { return }
+        let wasLoading = phase == .loading
+        phase = .closed
+        guard !wasLoading else { return }
+        model.stopLiveThumbnails()
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            model.expanded = false
+            model.raisedID = nil
+        }
+        panel?.orderOut(nil)
+        model.endSearch()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            DispatchQueue.global(qos: .userInteractive).async { WindowFocuser.focusCurrentDesktopIfNeeded() }
+        }
+        scheduleRefresh(captureThumbnails: true, delay: 0.4)
     }
 
     private func activate(_ window: WindowInfo) {
