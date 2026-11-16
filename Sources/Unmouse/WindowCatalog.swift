@@ -80,22 +80,6 @@ final class WindowCatalog {
         }
     }
 
-    /// 옮겨 갈 데스크탑(target)에서 보이게 될 윈도우를 전환 전에 미리 꾸린다.
-    /// 데스크탑 전환 단축키를 누른 순간 페이지를 밀기 시작하기 위함. 캐시가 없으면 nil.
-    func windows(onSpace target: Int) -> [WindowInfo]? {
-        guard let list = quickList() else { return nil }
-        return list.compactMap { w -> WindowInfo? in
-            switch w.location {
-            case .minimized, .hidden:
-                return w // 데스크탑과 상관없이 보여 준다 (설정에 따라)
-            case .visible, .otherSpace:
-                guard SpaceMap.spaces(of: w.id).contains(target) else { return nil }
-                return WindowInfo(id: w.id, pid: w.pid, appName: w.appName, title: w.title, icon: w.icon,
-                                  frame: w.frame, location: .visible, ax: w.ax, rank: w.rank)
-            }
-        }
-    }
-
     static func applyPreferences(_ windows: [WindowInfo]) -> [WindowInfo] {
         let defaults = UserDefaults.standard
         let includeMinimized = defaults.bool(forKey: Preferences.includeMinimized)

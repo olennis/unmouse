@@ -24,19 +24,25 @@ struct SwitcherView: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            // 데스크탑을 옮길 때: 떠나는 데스크탑 페이지와 새 페이지가 한 몸으로 옆으로 밀린다 (macOS 데스크탑 전환처럼).
-            if let outgoing = model.outgoing {
-                OutgoingPage(snapshot: outgoing)
-                    .offset(x: model.slideFades ? 0 : -model.slideDirection * model.pageWidth * model.slideProgress)
-                    .opacity(model.slideFades ? 1 - model.slideProgress : 1)
+            Group {
+                if let wallpaper = model.wallpaper {
+                    // Mission Control 처럼 바탕화면이 깔리고 그 위에 윈도우가 펼쳐진다.
+                    Image(decorative: wallpaper, scale: 1)
+                        .resizable()
+                    Color.black.opacity(0.22)
+                } else {
+                    VisualEffectBackground()
+                    Color.black.opacity(0.38)
+                }
             }
+            .opacity(model.expanded ? 1 : 0)
+            // 배경은 카드보다 빨리 깔려서, 줄어드는 카드 뒤로 실제 윈도우가 비치는 시간을 줄인다.
+            .animation(.easeOut(duration: 0.12), value: model.expanded)
+            .contentShape(Rectangle())
+            .onTapGesture(perform: onClose)
 
-            page
-                .offset(x: model.outgoing == nil || model.slideFades
-                        ? 0 : model.slideDirection * model.pageWidth * (1 - model.slideProgress))
-                .opacity(model.outgoing != nil && model.slideFades ? model.slideProgress : 1)
+            cards
 
-            // 검색 바·키 안내는 메뉴 막대처럼 제자리에 있다.
             chrome
                 .opacity(model.expanded ? 1 : 0)
         }
@@ -45,20 +51,6 @@ struct SwitcherView: View {
         .environment(\.colorScheme, .dark)
         // 검색으로 윈도우가 걸러지면 남은 카드가 새 자리로 미끄러진다.
         .animation(.snappy(duration: 0.28), value: model.query)
-    }
-
-    /// 지금 데스크탑의 바탕화면과 카드
-    private var page: some View {
-        ZStack(alignment: .topLeading) {
-            SwitcherBackground(wallpaper: model.wallpaper)
-                .opacity(model.expanded ? 1 : 0)
-                // 배경은 카드보다 빨리 깔려서, 줄어드는 카드 뒤로 실제 윈도우가 비치는 시간을 줄인다.
-                .animation(.easeOut(duration: 0.12), value: model.expanded)
-                .contentShape(Rectangle())
-                .onTapGesture(perform: onClose)
-
-            cards
-        }
     }
 
     private var cards: some View {
@@ -127,55 +119,6 @@ struct SwitcherView: View {
         guard model.displays.count > 1, let display = model.display,
               let index = model.displays.firstIndex(of: display) else { return nil }
         return "\(display.name)  \(index + 1)/\(model.displays.count)"
-    }
-}
-
-// MARK: - 배경
-
-/// Mission Control 처럼 바탕화면이 깔리고 그 위에 윈도우가 펼쳐진다. 화면 녹화 권한이 없으면 흐린 배경.
-struct SwitcherBackground: View {
-    let wallpaper: CGImage?
-
-    var body: some View {
-        ZStack {
-            if let wallpaper {
-                Image(decorative: wallpaper, scale: 1)
-                    .resizable()
-                Color.black.opacity(0.22)
-            } else {
-                VisualEffectBackground()
-                Color.black.opacity(0.38)
-            }
-        }
-    }
-}
-
-// MARK: - 떠나는 데스크탑 페이지
-
-/// 데스크탑을 옮기는 동안 화면 밖으로 밀려나는 이전 데스크탑 페이지 (그 순간 그대로 고정된 모습).
-struct OutgoingPage: View {
-    let snapshot: SwitcherModel.PageSnapshot
-
-    var body: some View {
-        ZStack(alignment: .topLeading) {
-            SwitcherBackground(wallpaper: snapshot.wallpaper)
-            ForEach(snapshot.items) { window in
-                let frame = snapshot.frames[window.id] ?? .zero
-                let isSelected = window.id == snapshot.selectedID
-                WindowCard(window: window, thumbnail: snapshot.thumbnails[window.id],
-                           hint: snapshot.hints[window.id], isSelected: isSelected)
-                    .frame(width: frame.width, height: frame.height)
-                    .overlay(alignment: .bottom) {
-                        WindowLabel(window: window, isSelected: isSelected)
-                            .frame(width: max(frame.width + MissionLayout.hGap - 8, 120))
-                            .offset(y: MissionLayout.labelBlock - 4)
-                    }
-                    .position(x: frame.midX, y: frame.midY)
-                    .zIndex(Double(1_000_000 - min(window.rank, 999_999)))
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .allowsHitTesting(false)
     }
 }
 

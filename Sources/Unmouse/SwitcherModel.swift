@@ -188,61 +188,6 @@ final class SwitcherModel: ObservableObject {
 
     var selected: WindowInfo? { items.first { $0.id == selectedID } }
 
-    // MARK: 데스크탑 전환 애니메이션
-
-    /// 데스크탑을 옮기는 순간 고정해 둔 이전 데스크탑 페이지
-    struct PageSnapshot {
-        let items: [WindowInfo]
-        let frames: [CGWindowID: CGRect]
-        let thumbnails: [CGWindowID: CGImage]
-        let hints: [CGWindowID: String]
-        let selectedID: CGWindowID?
-        let wallpaper: CGImage?
-    }
-
-    @Published private(set) var outgoing: PageSnapshot?
-    /// 0: 이전 페이지가 제자리 / 1: 새 페이지가 제자리
-    @Published private(set) var slideProgress: CGFloat = 1
-    /// +1: 오른쪽 데스크탑으로 (페이지가 왼쪽으로 밀린다) / -1: 왼쪽 데스크탑으로
-    @Published private(set) var slideDirection: CGFloat = 1
-    /// "동작 줄이기"가 켜져 있으면 밀지 않고 서서히 바꾼다 (macOS 와 같다).
-    @Published private(set) var slideFades = false
-    /// 패널(화면) 너비
-    var pageWidth: CGFloat = 0
-    private var slideToken = 0
-
-    /// 지금 페이지를 고정해 두고, 새 데스크탑의 윈도우로 채운 페이지를 옆에서 밀어 넣는다.
-    func slide(to newWindows: [WindowInfo], direction: CGFloat, fade: Bool = false) {
-        let snapshot = outgoing == nil || slideProgress >= 1
-            ? PageSnapshot(items: items, frames: layout.frames, thumbnails: thumbnails, hints: hints,
-                           selectedID: selectedID, wallpaper: wallpaper)
-            : outgoing! // 밀리는 도중에 또 옮기면 이전 장면을 그대로 이어 간다
-        slideToken += 1
-        let token = slideToken
-        var transaction = Transaction()
-        transaction.disablesAnimations = true
-        withTransaction(transaction) {
-            outgoing = snapshot
-            slideDirection = direction
-            slideFades = fade || NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-            slideProgress = 0
-            // 새 데스크탑에서는 "지금 쓰던 윈도우 건너뛰기"가 필요 없으니 맨 앞 윈도우를 고른다.
-            load(newWindows, frontmostPID: nil, displays: displays, display: display)
-        }
-        // 고정한 장면이 한 번 그려진 다음 밀기 시작한다.
-        DispatchQueue.main.async {
-            guard token == self.slideToken else { return }
-            // macOS 데스크탑 전환처럼 처음에 빠르게 출발해 부드럽게 멈춘다.
-            let animation: Animation = self.slideFades ? .easeInOut(duration: 0.22) : .spring(response: 0.36, dampingFraction: 1)
-            withAnimation(animation) {
-                self.slideProgress = 1
-            } completion: {
-                guard token == self.slideToken else { return }
-                self.outgoing = nil
-            }
-        }
-    }
-
     /// 지금 화면(데스크탑)에서 맨 앞에 있는 윈도우
     var frontVisibleWindow: WindowInfo? {
         windows.filter { $0.location == .visible }.min { $0.rank < $1.rank }

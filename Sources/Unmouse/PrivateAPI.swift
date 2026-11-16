@@ -7,10 +7,6 @@ import ApplicationServices
 @_silgen_name("CGSMainConnectionID")
 func CGSMainConnectionID() -> Int32
 
-/// 이 앱의 윈도우를 특정 Space 로 옮긴다 (데스크탑 전환 애니메이션에 선택기를 태우기 위해).
-@_silgen_name("SLSMoveWindowsToManagedSpace")
-func SLSMoveWindowsToManagedSpace(_ cid: Int32, _ windows: CFArray, _ space: UInt64)
-
 @_silgen_name("CGSGetActiveSpace")
 func CGSGetActiveSpace(_ cid: Int32) -> UInt64
 
