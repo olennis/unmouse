@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Moving to another desktop while the window switcher is open (`⌃⌘←` / `⌃⌘→` or a trackpad swipe) keeps the switcher open: it folds back onto the real windows, macOS slides to the new desktop as usual, and the switcher opens again on that desktop's windows. Closing it there with `esc` keeps you on the new desktop.
+- The window switcher now shows only the windows on the current desktop by default. Turn on “Include windows on other desktops” in Settings to see every desktop again.
+- New global shortcuts `⌃⌘←` / `⌃⌘→` (change them in Settings with `⌘[` / `⌘]`) move to the desktop on the left / right, like a three-finger swipe. They press the macOS “Move left/right a space” shortcut for you, using whatever keys it is set to, and work even when that shortcut is turned off. Requires Accessibility permission.
 - New global shortcut ``⌥` `` (changeable in Settings with `⌘S`) opens the window switcher on the next display, or moves it to the next display when it is already open.
 - With multiple displays, the window switcher shows only the windows on the display you are working on. Press `` ` `` (or `` ⇧` ``) while it is open to move to the next (or previous) display.
 - Fixed a crash when turning the menu bar icon on or off in Settings, which quit Unmouse and stopped its shortcuts (such as ⌥Tab) from working.

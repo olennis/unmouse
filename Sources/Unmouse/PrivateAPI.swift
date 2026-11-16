@@ -7,6 +7,9 @@ import ApplicationServices
 @_silgen_name("CGSMainConnectionID")
 func CGSMainConnectionID() -> Int32
 
+@_silgen_name("CGSGetActiveSpace")
+func CGSGetActiveSpace(_ cid: Int32) -> UInt64
+
 @_silgen_name("CGSCopyManagedDisplaySpaces")
 func CGSCopyManagedDisplaySpaces(_ cid: Int32) -> CFArray
 
@@ -27,6 +30,17 @@ func _SLPSSetFrontProcessWithOptions(_ psn: inout ProcessSerialNumber, _ wid: CG
 
 @_silgen_name("SLPSPostEventRecordTo")
 func SLPSPostEventRecordTo(_ psn: inout ProcessSerialNumber, _ bytes: UnsafeMutablePointer<UInt8>) -> CGError
+
+// 시스템 설정 > 키보드 단축키 > Mission Control 의 항목 (79: 왼쪽 Space 로 이동, 81: 오른쪽 Space 로 이동)
+@_silgen_name("CGSGetSymbolicHotKeyValue")
+func CGSGetSymbolicHotKeyValue(_ hotKey: Int32, _ keyEquivalent: inout UInt16, _ virtualKeyCode: inout UInt16,
+                               _ modifiers: inout UInt32) -> CGError
+
+@_silgen_name("CGSIsSymbolicHotKeyEnabled")
+func CGSIsSymbolicHotKeyEnabled(_ hotKey: Int32) -> Bool
+
+@_silgen_name("CGSSetSymbolicHotKeyEnabled")
+func CGSSetSymbolicHotKeyEnabled(_ hotKey: Int32, _ enabled: Bool) -> CGError
 
 // MARK: - AX helpers
 
@@ -52,6 +66,15 @@ struct SpaceMap {
     var labels: [Int: String] = [:]
     /// Space id → 정렬용 순서
     var order: [Int: Int] = [:]
+    /// 디스플레이마다 왼쪽 → 오른쪽 순서의 Space id
+    var displaySpaces: [[Int]] = []
+
+    /// active 와 같은 디스플레이에서 delta 칸 옆 Space. 끝이면 nil.
+    func neighbor(of active: Int, by delta: Int) -> Int? {
+        guard let spaces = displaySpaces.first(where: { $0.contains(active) }),
+              let index = spaces.firstIndex(of: active), spaces.indices.contains(index + delta) else { return nil }
+        return spaces[index + delta]
+    }
 
     static func current() -> SpaceMap {
         var map = SpaceMap()
@@ -62,8 +85,11 @@ struct SpaceMap {
             if let cur = display["Current Space"] as? [String: Any], let id = spaceID(cur) {
                 map.visible.insert(id)
             }
+            var ids: [Int] = []
+            defer { map.displaySpaces.append(ids) }
             for space in display["Spaces"] as? [[String: Any]] ?? [] {
                 guard let id = spaceID(space) else { continue }
+                ids.append(id)
                 index += 1
                 map.order[id] = index
                 if (space["type"] as? Int ?? 0) == 0 {

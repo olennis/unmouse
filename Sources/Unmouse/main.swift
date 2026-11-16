@@ -34,6 +34,11 @@ MainActor.assumeIsolated {
         }
         try? lines.joined(separator: "\n").write(toFile: "\(directory)/hints.txt", atomically: true, encoding: .utf8)
         exit(0)
+    } else if let index = CommandLine.arguments.firstIndex(of: "--test-desktop"), CommandLine.arguments.count > index + 1 {
+        // 개발용: 데스크탑 전환·포커스 시나리오를 실행 중인 Unmouse 로 재현한다 (DevTests 참고).
+        let args = CommandLine.arguments
+        DevTests.runDesktop(directory: args[index + 1], scenario: args.count > index + 2 ? args[index + 2] : "hotkey")
+        exit(0)
     } else if let index = CommandLine.arguments.firstIndex(of: "--dump-wallpaper"), CommandLine.arguments.count > index + 1 {
         let directory = CommandLine.arguments[index + 1]
         Task {
