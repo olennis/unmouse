@@ -41,6 +41,20 @@ final class SwitcherController: NSObject, NSWindowDelegate {
         }
     }
 
+    /// 전역 "다음 디스플레이" 단축키: 닫혀 있으면 다음 디스플레이에서 열고, 열려 있으면 다음 디스플레이로 옮긴다.
+    func showNextDisplay() {
+        switch phase {
+        case .open: switchDisplay(by: 1)
+        case .closed:
+            pendingDisplayOffset = 1
+            show()
+        case .loading, .closing: break
+        }
+    }
+
+    /// 다음에 열 때 처음 디스플레이에서 몇 칸 옮겨서 열지
+    private var pendingDisplayOffset = 0
+
     static let thumbnailPixels: CGFloat = 1200
 
     // MARK: 미리 준비
@@ -117,23 +131,25 @@ final class SwitcherController: NSObject, NSWindowDelegate {
     }
 
     private func present(_ windows: [WindowInfo], frontmostPID: pid_t?) {
-        guard let screen = NSScreen.main ?? NSScreen.screens.first else {
+        let displays = SwitcherDisplay.all()
+        let offset = pendingDisplayOffset
+        pendingDisplayOffset = 0
+        guard var display = Self.initialDisplay(windows, frontmostPID: frontmostPID, displays: displays) else {
             phase = .closed
             return
         }
-        // CoreGraphics 좌표(주 화면 왼쪽 위 원점)에서 이 화면의 원점
-        let primaryHeight = NSScreen.screens.first?.frame.height ?? screen.frame.height
-        model.screenOrigin = CGPoint(x: screen.frame.minX, y: primaryHeight - screen.frame.maxY)
-        let visible = screen.visibleFrame
-        let safe = EdgeInsets(top: max(screen.frame.maxY - visible.maxY, screen.safeAreaInsets.top),
-                              leading: visible.minX - screen.frame.minX,
-                              bottom: visible.minY - screen.frame.minY,
-                              trailing: screen.frame.maxX - visible.maxX)
-        if model.safeInsets != safe { model.safeInsets = safe }
-        model.contentRect = SwitcherInsets.contentRect(size: screen.frame.size, safe: safe)
+        if offset != 0, let index = displays.firstIndex(of: display) {
+            display = displays[((index + offset) % displays.count + displays.count) % displays.count]
+        }
+        guard let screen = Self.screen(for: display) else {
+            phase = .closed
+            return
+        }
+        applyGeometry(of: screen)
         model.expanded = false
         model.raisedID = nil
-        model.load(windows, frontmostPID: frontmostPID)
+        // 다른 디스플레이로 열 때는 "지금 쓰던 윈도우 건너뛰기"가 필요 없으니 그 화면의 맨 앞 윈도우를 고른다.
+        model.load(windows, frontmostPID: offset == 0 ? frontmostPID : nil, displays: displays, display: display)
         model.startLiveThumbnails(maxPixelSize: Self.thumbnailPixels)
 
         let panel = self.panel ?? makePanel()
@@ -150,6 +166,56 @@ final class SwitcherController: NSObject, NSWindowDelegate {
         DispatchQueue.main.async {
             withAnimation(Self.expandAnimation) { self.model.expanded = true }
         }
+    }
+
+    /// 처음 펼칠 디스플레이: 지금 쓰고 있는 윈도우가 있는 화면. 없으면 메뉴 막대가 활성인 화면.
+    private static func initialDisplay(_ windows: [WindowInfo], frontmostPID: pid_t?,
+                                       displays: [SwitcherDisplay]) -> SwitcherDisplay? {
+        if let frontmostPID,
+           let focused = windows.filter({ $0.pid == frontmostPID && $0.location == .visible }).min(by: { $0.rank < $1.rank }),
+           let owner = SwitcherDisplay.owner(of: focused.frame, among: displays) {
+            return owner
+        }
+        if let main = (NSScreen.main ?? NSScreen.screens.first)?.displayID,
+           let display = displays.first(where: { $0.id == main }) {
+            return display
+        }
+        return displays.first
+    }
+
+    private static func screen(for display: SwitcherDisplay) -> NSScreen? {
+        NSScreen.screens.first { $0.displayID == display.id }
+    }
+
+    /// 패널이 덮을 화면에 맞춰 여백과 카드 영역을 정한다.
+    private func applyGeometry(of screen: NSScreen) {
+        // CoreGraphics 좌표(주 화면 왼쪽 위 원점)에서 이 화면의 원점
+        let primaryHeight = NSScreen.screens.first?.frame.height ?? screen.frame.height
+        model.screenOrigin = CGPoint(x: screen.frame.minX, y: primaryHeight - screen.frame.maxY)
+        let visible = screen.visibleFrame
+        let safe = EdgeInsets(top: max(screen.frame.maxY - visible.maxY, screen.safeAreaInsets.top),
+                              leading: visible.minX - screen.frame.minX,
+                              bottom: visible.minY - screen.frame.minY,
+                              trailing: screen.frame.maxX - visible.maxX)
+        if model.safeInsets != safe { model.safeInsets = safe }
+        model.contentRect = SwitcherInsets.contentRect(size: screen.frame.size, safe: safe)
+    }
+
+    /// 열려 있는 선택기를 다음(또는 이전) 디스플레이로 옮겨 그 화면의 윈도우를 펼친다.
+    private func switchDisplay(by delta: Int) {
+        guard phase == .open else { return }
+        let displays = SwitcherDisplay.all()
+        guard displays.count > 1 else { return }
+        let index = model.display.flatMap { current in displays.firstIndex { $0.id == current.id } } ?? 0
+        let next = displays[((index + delta) % displays.count + displays.count) % displays.count]
+        guard let screen = Self.screen(for: next), let panel else { return }
+
+        applyGeometry(of: screen)
+        panel.setFrame(screen.frame, display: false)
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) { model.switchDisplay(to: next) }
+        model.startLiveThumbnails(maxPixelSize: Self.thumbnailPixels)
     }
 
     /// 카드를 실제 윈도우 자리로 되돌리는 애니메이션 후 패널을 내린다.
@@ -249,6 +315,8 @@ final class SwitcherController: NSObject, NSWindowDelegate {
                 if let window = model.selected { activate(window) }
             } else if code == kVK_ANSI_Slash {
                 model.beginSearch()
+            } else if code == kVK_ANSI_Grave {
+                switchDisplay(by: flags == .shift ? -1 : 1)
             } else if let window = model.window(forHintKeyCode: event.keyCode) {
                 activate(window)
             }

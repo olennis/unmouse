@@ -54,12 +54,14 @@ enum HotKeySlot: UInt32, CaseIterable {
     case switcher = 1   // 윈도우 선택기
     case hints = 2      // 클릭 힌트
     case scroll = 3     // 키보드 스크롤
+    case nextDisplay = 4 // 다음 디스플레이에서 윈도우 선택기
 
     var defaultsKey: String {
         switch self {
         case .switcher: "shortcut"
         case .hints: "hintShortcut"
         case .scroll: "scrollShortcut"
+        case .nextDisplay: "nextDisplayShortcut"
         }
     }
 
@@ -68,6 +70,7 @@ enum HotKeySlot: UInt32, CaseIterable {
         case .switcher: .default                                                        // ⌥Tab
         case .hints: Shortcut(keyCode: UInt32(kVK_ANSI_F), carbonModifiers: UInt32(optionKey)) // ⌥F
         case .scroll: Shortcut(keyCode: UInt32(kVK_ANSI_J), carbonModifiers: UInt32(optionKey)) // ⌥J
+        case .nextDisplay: Shortcut(keyCode: UInt32(kVK_ANSI_Grave), carbonModifiers: UInt32(optionKey)) // ⌥`
         }
     }
 
@@ -76,6 +79,7 @@ enum HotKeySlot: UInt32, CaseIterable {
         case .switcher: L10n.text("Open Window Switcher")
         case .hints: L10n.text("Show Click Hints")
         case .scroll: L10n.text("Keyboard Scroll Mode")
+        case .nextDisplay: L10n.text("Switch to Next Display")
         }
     }
 }

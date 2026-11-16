@@ -107,11 +107,18 @@ struct SwitcherView: View {
                 )
                 Spacer(minLength: 0)
             }
-            LegendBar(isSearching: model.isSearching)
+            LegendBar(isSearching: model.isSearching, displayStatus: displayStatus)
                 .padding(.bottom, 16)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(model.safeInsets) // 메뉴 막대와 Dock 은 그대로 보이므로 그 안쪽에 배치
+    }
+
+    /// 디스플레이가 여러 개일 때만: "LG UltraFine  2/3"
+    private var displayStatus: String? {
+        guard model.displays.count > 1, let display = model.display,
+              let index = model.displays.firstIndex(of: display) else { return nil }
+        return "\(display.name)  \(index + 1)/\(model.displays.count)"
     }
 }
 
@@ -307,9 +314,17 @@ struct SearchField: NSViewRepresentable {
 
 struct LegendBar: View {
     let isSearching: Bool
+    var displayStatus: String? = nil
 
     var body: some View {
         HStack(spacing: 18) {
+            if let displayStatus {
+                Label(displayStatus, systemImage: "display")
+                    .fontWeight(.medium)
+                    .lineLimit(1)
+                    .fixedSize()
+                if !isSearching { item(["`"], L10n.text("Next display")) }
+            }
             if isSearching {
                 item(["←", "↑", "↓", "→"], L10n.text("Navigate"))
                 item(["↩"], L10n.text("Select"))

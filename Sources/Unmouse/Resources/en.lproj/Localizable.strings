@@ -91,3 +91,7 @@
 "⌘-click" = "⌘-click";
 "Show icon in menu bar" = "Show icon in menu bar";
 "Unmouse keeps running. To open Settings, launch Unmouse again from Spotlight." = "Unmouse keeps running. To open Settings, launch Unmouse again from Spotlight.";
+"Next display" = "Next display";
+"Show windows on the next display (⇧` for the previous one)" = "Show windows on the next display (⇧` for the previous one)";
+"Switch to Next Display" = "Switch to Next Display";
+"Switch to Next Display    %@" = "Switch to Next Display    %@";
