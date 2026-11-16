@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var menuBarIconObservation: NSKeyValueObservation?
     private var settingsWindow: NSWindow?
     private var openMenuItem: NSMenuItem?
+    private var nextDisplayMenuItem: NSMenuItem?
     private var hintMenuItem: NSMenuItem?
     private var scrollMenuItem: NSMenuItem?
 
@@ -43,6 +44,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             self?.hints.close()
             self?.scroller.close()
             self?.switcher.toggle()
+        }
+        HotKeyCenter.shared.handlers[.nextDisplay] = { [weak self] in
+            self?.hints.close()
+            self?.scroller.close()
+            self?.switcher.showNextDisplay()
         }
         HotKeyCenter.shared.handlers[.hints] = { [weak self] in
             guard let self, !self.switcher.isOpen else { return }
@@ -83,6 +89,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         open.target = self
         menu.addItem(open)
         openMenuItem = open
+        let nextDisplay = NSMenuItem(title: L10n.text("Switch to Next Display"), action: #selector(openSwitcherOnNextDisplay), keyEquivalent: "")
+        nextDisplay.target = self
+        menu.addItem(nextDisplay)
+        nextDisplayMenuItem = nextDisplay
         let hint = NSMenuItem(title: L10n.text("Show Click Hints"), action: #selector(showHints), keyEquivalent: "")
         hint.target = self
         menu.addItem(hint)
@@ -137,6 +147,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         switcher.show()
     }
 
+    @objc private func openSwitcherOnNextDisplay() {
+        switcher.showNextDisplay()
+    }
+
     @objc private func showHints() {
         // 메뉴가 닫히고 원래 앱이 다시 앞에 온 뒤에 훑는다.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { self.hints.toggle() }
@@ -165,6 +179,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 extension AppDelegate: NSMenuDelegate {
     func menuNeedsUpdate(_ menu: NSMenu) {
         openMenuItem?.title = L10n.format("Open Window Switcher    %@", Shortcut.load(.switcher).display)
+        nextDisplayMenuItem?.title = L10n.format("Switch to Next Display    %@", Shortcut.load(.nextDisplay).display)
+        nextDisplayMenuItem?.isHidden = NSScreen.screens.count < 2
         hintMenuItem?.title = L10n.format("Show Click Hints    %@", Shortcut.load(.hints).display)
         scrollMenuItem?.title = L10n.format("Keyboard Scroll Mode    %@", Shortcut.load(.scroll).display)
     }

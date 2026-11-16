@@ -41,6 +41,20 @@ final class SwitcherController: NSObject, NSWindowDelegate {
         }
     }
 
+    /// 전역 "다음 디스플레이" 단축키: 닫혀 있으면 다음 디스플레이에서 열고, 열려 있으면 다음 디스플레이로 옮긴다.
+    func showNextDisplay() {
+        switch phase {
+        case .open: switchDisplay(by: 1)
+        case .closed:
+            pendingDisplayOffset = 1
+            show()
+        case .loading, .closing: break
+        }
+    }
+
+    /// 다음에 열 때 처음 디스플레이에서 몇 칸 옮겨서 열지
+    private var pendingDisplayOffset = 0
+
     static let thumbnailPixels: CGFloat = 1200
 
     // MARK: 미리 준비
@@ -118,15 +132,24 @@ final class SwitcherController: NSObject, NSWindowDelegate {
 
     private func present(_ windows: [WindowInfo], frontmostPID: pid_t?) {
         let displays = SwitcherDisplay.all()
-        guard let display = Self.initialDisplay(windows, frontmostPID: frontmostPID, displays: displays),
-              let screen = Self.screen(for: display) else {
+        let offset = pendingDisplayOffset
+        pendingDisplayOffset = 0
+        guard var display = Self.initialDisplay(windows, frontmostPID: frontmostPID, displays: displays) else {
+            phase = .closed
+            return
+        }
+        if offset != 0, let index = displays.firstIndex(of: display) {
+            display = displays[((index + offset) % displays.count + displays.count) % displays.count]
+        }
+        guard let screen = Self.screen(for: display) else {
             phase = .closed
             return
         }
         applyGeometry(of: screen)
         model.expanded = false
         model.raisedID = nil
-        model.load(windows, frontmostPID: frontmostPID, displays: displays, display: display)
+        // 다른 디스플레이로 열 때는 "지금 쓰던 윈도우 건너뛰기"가 필요 없으니 그 화면의 맨 앞 윈도우를 고른다.
+        model.load(windows, frontmostPID: offset == 0 ? frontmostPID : nil, displays: displays, display: display)
         model.startLiveThumbnails(maxPixelSize: Self.thumbnailPixels)
 
         let panel = self.panel ?? makePanel()

@@ -93,3 +93,5 @@
 "Unmouse keeps running. To open Settings, launch Unmouse again from Spotlight." = "Unmouse 는 계속 실행됩니다. 설정을 열려면 Spotlight 에서 Unmouse 를 다시 실행하세요.";
 "Next display" = "다음 디스플레이";
 "Show windows on the next display (⇧` for the previous one)" = "다음 디스플레이의 윈도우 보기 (⇧`는 이전 디스플레이)";
+"Switch to Next Display" = "다음 디스플레이로 전환";
+"Switch to Next Display    %@" = "다음 디스플레이로 전환    %@";
